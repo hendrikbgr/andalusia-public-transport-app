@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Route</title>
+  <link rel="stylesheet" href="src/style.css?v=4" />
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="theme-color" content="#1a6fdb" />
+</head>
+<body>
+  <div id="app">
+    <header class="app-header station-header">
+      <div class="header-inner">
+        <a id="back-btn" class="back-link" title="Back">←</a>
+        <div class="header-text">
+          <h1 id="route-title">Loading…</h1>
+          <span id="route-meta" class="station-meta"></span>
+        </div>
+        <button class="lang-toggle" id="lang-toggle" title="Switch language">EN</button>
+      </div>
+    </header>
+
+    <main class="main-content station-main">
+      <!-- Service disruption banner (shown only when hayNoticias = true) -->
+      <div id="disruption-banner" class="disruption-banner hidden">
+        <div class="disruption-banner-header">
+          <span class="disruption-icon">⚠️</span>
+          <span id="disruption-banner-title" class="disruption-banner-title">Service alerts</span>
+        </div>
+        <div id="disruption-alerts-list" class="disruption-alerts-list"></div>
+      </div>
+
+      <!-- Direction tabs -->
+      <div class="direction-tabs" id="direction-tabs"></div>
+
+      <!-- Full timetable link -->
+      <a id="timetable-btn" class="timetable-link-btn hidden" href="#">Full timetable</a>
+
+      <!-- View route on map -->
+      <a id="polyline-map-btn" class="show-on-map-btn hidden" href="#">View route on map</a>
+
+      <!-- Hint -->
+      <p class="hint route-hint" id="route-hint"></p>
+
+      <!-- Stops list -->
+      <div id="route-stops" class="card-list">
+        <div class="loading-spinner"></div>
+      </div>
+    </main>
+  </div>
+
+  <script src="src/js/i18n.js?v=2"></script>
+  <script src="src/js/route.js?v=4"></script>
+  <script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');</script>
+</body>
+</html>

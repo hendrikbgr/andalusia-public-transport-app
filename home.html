@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CTAN Bus Tracker</title>
+  <link rel="stylesheet" href="src/style.css?v=4" />
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="theme-color" content="#1a6fdb" />
+</head>
+<body>
+  <div id="app">
+    <header class="app-header">
+      <div class="header-inner">
+        <span class="app-icon">🚌</span>
+        <h1 id="app-title">Bus Tracker</h1>
+        <button class="lang-toggle" id="lang-toggle" title="Switch language">EN</button>
+      </div>
+    </header>
+
+    <main class="main-content home-content">
+      <div class="home-greeting" id="home-greeting">Good morning</div>
+
+      <div class="home-card-grid">
+        <!-- Live departures -->
+        <a href="index.html" class="home-feature-card">
+          <div class="home-feature-icon">🚏</div>
+          <div class="home-feature-body">
+            <div class="home-feature-title" id="feat-timetable">Live Departures</div>
+            <div class="home-feature-desc" id="feat-timetable-desc">See real-time buses at any stop</div>
+          </div>
+          <span class="card-arrow">›</span>
+        </a>
+
+        <!-- Route planner -->
+        <a href="planner.html" class="home-feature-card">
+          <div class="home-feature-icon">🗺️</div>
+          <div class="home-feature-body">
+            <div class="home-feature-title" id="feat-planner">Route Planner</div>
+            <div class="home-feature-desc" id="feat-planner-desc">Find buses between two towns</div>
+          </div>
+          <span class="card-arrow">›</span>
+        </a>
+
+        <!-- Stop map -->
+        <a href="map.html" class="home-feature-card">
+          <div class="home-feature-icon">📍</div>
+          <div class="home-feature-body">
+            <div class="home-feature-title" id="feat-map">Stop Map</div>
+            <div class="home-feature-desc" id="feat-map-desc">Browse all stops on a map</div>
+          </div>
+          <span class="card-arrow">›</span>
+        </a>
+      </div>
+    </main>
+  </div>
+
+  <!-- PWA install banner -->
+  <div id="pwa-banner" class="pwa-banner hidden" role="region" aria-label="Install app">
+    <span id="pwa-banner-text">Install for quick access</span>
+    <div class="pwa-banner-actions">
+      <button id="pwa-install-btn" class="pwa-install-btn">Install</button>
+      <button id="pwa-dismiss-btn" class="pwa-dismiss-btn">✕ Not now</button>
+    </div>
+  </div>
+
+  <script src="src/js/i18n.js?v=2"></script>
+  <script src="src/js/home.js?v=2"></script>
+  <script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');</script>
+</body>
+</html>

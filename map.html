@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bus Stop Map</title>
+  <link rel="stylesheet" href="src/style.css?v=4" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+</head>
+<body class="map-page">
+  <div id="app">
+    <header class="app-header">
+      <div class="header-inner">
+        <a href="home.html" class="back-link" title="Home">←</a>
+        <h1 id="map-title">Stop Map</h1>
+        <button class="lang-toggle" id="lang-toggle" title="Switch language">EN</button>
+      </div>
+    </header>
+
+    <!-- Region selector overlay (shown until region chosen) -->
+    <div id="region-overlay" class="map-region-overlay">
+      <div class="map-region-card">
+        <div class="map-region-title" id="overlay-title">Select a region</div>
+        <div id="overlay-region-list" class="map-overlay-list">
+          <div class="loading-spinner"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Map container -->
+    <div id="map-container" class="map-container hidden">
+      <div id="leaflet-map"></div>
+
+      <!-- Region switcher pill -->
+      <button id="region-btn" class="map-region-pill">
+        <span id="region-pill-name">Region</span>
+        <span class="map-region-pill-icon">▾</span>
+      </button>
+
+      <!-- Route mode: toggle all stops -->
+      <button id="all-stops-toggle" class="map-all-stops-toggle hidden">
+        <span id="all-stops-toggle-label">Show all stops</span>
+      </button>
+
+      <!-- Loading indicator -->
+      <div id="map-loading" class="map-loading hidden">
+        <div class="loading-spinner"></div>
+      </div>
+
+      <!-- Location denied toast -->
+      <div id="location-toast" class="location-toast hidden" role="status" aria-live="polite">
+        <span id="location-toast-text">Location unavailable</span>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="src/js/i18n.js?v=2"></script>
+  <script src="src/js/map.js?v=3"></script>
+  <script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');</script>
+</body>
+</html>

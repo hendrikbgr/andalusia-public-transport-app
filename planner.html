@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Route Planner</title>
+  <link rel="stylesheet" href="src/style.css?v=4" />
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="theme-color" content="#1a6fdb" />
+</head>
+<body>
+  <div id="app">
+    <header class="app-header">
+      <div class="header-inner">
+        <a href="home.html" class="back-link" title="Home">←</a>
+        <h1 id="planner-title">Route Planner</h1>
+        <button class="lang-toggle" id="lang-toggle" title="Switch language">EN</button>
+      </div>
+    </header>
+
+    <main class="main-content">
+
+      <!-- Region selector -->
+      <div id="step-region" class="planner-step">
+        <div class="step-label" id="label-region">Select region</div>
+        <div id="planner-region-list" class="card-list">
+          <div class="loading-spinner"></div>
+        </div>
+      </div>
+
+      <!-- From / To form -->
+      <div id="step-form" class="planner-step hidden">
+        <button class="back-btn" id="back-to-region">← Back</button>
+        <div class="step-label" id="planner-region-label">Region</div>
+
+        <div class="planner-form">
+          <!-- From -->
+          <div class="planner-field">
+            <label class="planner-label" id="label-from">From</label>
+            <div class="search-box">
+              <input type="search" id="from-input" autocomplete="off" autocorrect="off" spellcheck="false" />
+              <div id="from-results" class="planner-dropdown hidden"></div>
+            </div>
+          </div>
+
+          <!-- Swap button -->
+          <button class="swap-btn" id="swap-btn" title="Swap">⇅</button>
+
+          <!-- To -->
+          <div class="planner-field">
+            <label class="planner-label" id="label-to">To</label>
+            <div class="search-box">
+              <input type="search" id="to-input" autocomplete="off" autocorrect="off" spellcheck="false" />
+              <div id="to-results" class="planner-dropdown hidden"></div>
+            </div>
+          </div>
+
+          <button class="search-btn" id="search-btn" disabled>
+            <span id="search-btn-text">Search</span>
+          </button>
+
+          <!-- Date toggle row -->
+          <div id="date-toggle-row" class="date-toggle-row">
+            <button class="date-toggle-btn active" id="date-btn-today"    data-mode="today">Today</button>
+            <button class="date-toggle-btn"        id="date-btn-tomorrow" data-mode="tomorrow">Tomorrow</button>
+            <button class="date-toggle-btn"        id="date-btn-pick"     data-mode="pick">Pick date</button>
+            <input  type="date" id="date-picker-input" class="date-picker-input hidden" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Results -->
+      <div id="step-results" class="planner-step hidden">
+        <button class="back-btn" id="back-to-form">← Back</button>
+        <div class="step-label" id="results-label">Next departures</div>
+        <div class="planner-route-summary" id="route-summary"></div>
+        <div id="results-list" class="card-list">
+          <div class="loading-spinner"></div>
+        </div>
+        <div id="results-no-service" class="no-service hidden">
+          <div class="no-service-icon">🔍</div>
+          <p id="results-no-service-text">No routes found</p>
+          <p class="hint" id="results-no-service-hint">Try a different origin or destination</p>
+        </div>
+
+        <!-- Direct connections: full day view -->
+        <div id="direct-section" class="direct-section hidden">
+          <div class="step-label" id="direct-section-label">All departures today:</div>
+          <div id="direct-list" class="card-list"></div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <script src="src/js/i18n.js?v=2"></script>
+  <script src="src/js/planner.js?v=2"></script>
+  <script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');</script>
+</body>
+</html>

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Timetable</title>
+  <link rel="stylesheet" href="src/style.css?v=4" />
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="theme-color" content="#1a6fdb" />
+</head>
+<body>
+  <div id="app">
+    <header class="app-header station-header">
+      <div class="header-inner">
+        <a id="back-btn" class="back-link" title="Back">←</a>
+        <div class="header-text">
+          <h1 id="tt-title">Timetable</h1>
+          <span id="tt-meta" class="station-meta"></span>
+        </div>
+        <button class="lang-toggle" id="lang-toggle" title="Switch language">EN</button>
+      </div>
+    </header>
+
+    <main class="main-content station-main">
+      <!-- Direction tabs (Outbound / Inbound) -->
+      <div id="tt-direction-tabs" class="direction-tabs"></div>
+
+      <!-- Frequency (day-type) tabs -->
+      <div id="tt-freq-tabs" class="tt-freq-tabs"></div>
+
+      <!-- Timetable grid -->
+      <div id="tt-grid-wrapper" class="tt-grid-wrapper">
+        <div class="loading-spinner"></div>
+      </div>
+    </main>
+  </div>
+
+  <script src="src/js/i18n.js?v=2"></script>
+  <script src="src/js/timetable.js?v=2"></script>
+  <script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');</script>
+</body>
+</html>

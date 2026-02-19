@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Live Departures</title>
+  <link rel="stylesheet" href="src/style.css?v=4" />
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="theme-color" content="#1a6fdb" />
+</head>
+<body class="station-page">
+  <div id="app">
+    <header class="app-header station-header">
+      <div class="header-inner">
+        <a id="back-btn" href="index.html" class="back-link" title="Back">←</a>
+        <div class="header-text">
+          <h1 id="station-name">Loading…</h1>
+          <span id="station-meta" class="station-meta"></span>
+        </div>
+        <button class="lang-toggle" id="lang-toggle" title="Switch language">EN</button>
+        <button class="qr-btn" id="qr-toggle" title="Show QR code">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="22" height="22">
+            <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+            <rect x="3" y="14" width="7" height="7"/>
+            <path d="M14 14h.01M14 17h3M17 14v3M20 17v.01M20 20h.01M17 20h.01"/>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- QR overlay -->
+    <div id="qr-overlay" class="qr-overlay hidden">
+      <div class="qr-card">
+        <p class="qr-label" id="qr-label">Scan for live departures</p>
+        <div id="qr-code"></div>
+        <p id="qr-url" class="qr-url"></p>
+        <button id="qr-close" class="qr-close-btn" id="qr-close-btn">Close</button>
+      </div>
+    </div>
+
+    <main class="main-content station-main">
+      <!-- Live clock + refresh indicator -->
+      <div class="status-bar">
+        <span id="live-clock" class="live-clock"></span>
+        <span id="refresh-indicator" class="refresh-indicator">
+          <span class="refresh-dot"></span> <span id="live-label">Live</span>
+        </span>
+        <span id="countdown" class="countdown"></span>
+      </div>
+
+      <!-- Show on map -->
+      <a id="show-on-map-btn" class="show-on-map-btn hidden" href="#">Show on map</a>
+
+      <!-- Save stop -->
+      <button id="save-stop-btn" class="save-stop-btn hidden" aria-label="Save this stop">
+        ☆ <span id="save-stop-label">Save stop</span>
+      </button>
+
+      <!-- Departures board -->
+      <div id="departures-board" class="departures-board">
+        <div class="loading-spinner"></div>
+      </div>
+
+      <!-- Scanning indicator (shown while looking ahead) -->
+      <div id="scanning-indicator" class="scanning-indicator hidden">
+        <div class="loading-spinner"></div>
+        <p id="scanning-text" class="hint">Searching for upcoming services…</p>
+      </div>
+
+      <!-- No service message -->
+      <div id="no-service" class="no-service hidden">
+        <div class="no-service-icon">🌙</div>
+        <p id="no-service-text">No services found today</p>
+        <p class="hint" id="no-service-hint">This stop has no more departures today</p>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="src/js/i18n.js?v=2"></script>
+  <script src="src/js/station.js?v=2"></script>
+  <script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');</script>
+</body>
+</html>
