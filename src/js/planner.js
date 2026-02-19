@@ -13,7 +13,7 @@ const STRINGS = {
     labelTo: 'To',
     searchBtn: 'Search',
     searching: 'Searching…',
-    resultsLabel: 'Next departures',
+    resultsLabel: mode => mode === 'today' ? 'Next departures' : mode === 'tomorrow' ? 'Departures tomorrow' : 'Departures on this date',
     noRoutes: 'No direct routes found',
     noRoutesHint: 'Try a different origin or destination',
     noConn: 'Could not load data. Check your connection.',
@@ -28,7 +28,7 @@ const STRINGS = {
     dateToday: 'Today',
     dateTomorrow: 'Tomorrow',
     datePick: 'Pick date',
-    directConnections: 'All departures today:',
+    directConnections: mode => mode === 'today' ? 'All departures today:' : mode === 'tomorrow' ? 'All departures tomorrow:' : 'All departures on this date:',
   },
   es: {
     plannerTitle: 'Planificador de Ruta',
@@ -37,7 +37,7 @@ const STRINGS = {
     labelTo: 'Hasta',
     searchBtn: 'Buscar',
     searching: 'Buscando…',
-    resultsLabel: 'Próximas salidas',
+    resultsLabel: mode => mode === 'today' ? 'Próximas salidas' : mode === 'tomorrow' ? 'Salidas mañana' : 'Salidas en esta fecha',
     noRoutes: 'No se encontraron rutas directas',
     noRoutesHint: 'Prueba con otro origen o destino',
     noConn: 'No se pudo cargar. Comprueba la conexión.',
@@ -52,7 +52,7 @@ const STRINGS = {
     dateToday: 'Hoy',
     dateTomorrow: 'Mañana',
     datePick: 'Elegir fecha',
-    directConnections: 'Todas las salidas hoy:',
+    directConnections: mode => mode === 'today' ? 'Todas las salidas hoy:' : mode === 'tomorrow' ? 'Todas las salidas mañana:' : 'Todas las salidas en esta fecha:',
   },
 };
 
@@ -158,7 +158,7 @@ function applyLang() {
   searchBtnText.textContent = s('searchBtn');
   backToRegion.textContent = s('backRegion');
   backToForm.textContent = s('backForm');
-  resultsLabel.textContent = s('resultsLabel');
+  resultsLabel.textContent = s('resultsLabel', selectedDateMode);
   resultsNoServiceText.textContent = s('noRoutes');
   resultsNoServiceHint.textContent = s('noRoutesHint');
   dateBtnToday.textContent    = s('dateToday');
@@ -346,7 +346,7 @@ async function runSearch() {
   resultsNoService.classList.add('hidden');
   directSection.classList.add('hidden');
   routeSummary.textContent = `${selectedFrom.nombre}  →  ${selectedTo.nombre}`;
-  resultsLabel.textContent = s('resultsLabel');
+  resultsLabel.textContent = s('resultsLabel', selectedDateMode);
 
   try {
     const now = getSearchDate();
@@ -406,15 +406,14 @@ function renderResults(data, now) {
   // nucleos[0] is the "Líneas" column (colspan 1), then origin group, then destination group.
   // We skip the first column (line name) and map each nucleo to its column range.
   const nucleos = data.nucleos || [];
-  let colOffset = 1; // horas[0] is always the line-name column — skip it
+  let colOffset = 0; // nucleos[0] is a blank label row with no horas column — skip it
   let originIndices = [];
   let destIndices = [];
-  // nucleos[0] = blank "Líneas" header, nucleos[1] = origin town, nucleos[2] = dest town
-  // (there may be more but we only care about origin and dest)
+  // nucleos[0] = blank "Líneas" header (decorative, no horas slot)
+  // nucleos[1] = origin town, nucleos[2] = dest town
   for (let i = 0; i < nucleos.length; i++) {
     const span = nucleos[i].colspan || 1;
-    const nombre = (nucleos[i].nombre || '').trim();
-    if (i === 0) { colOffset += span; continue; } // skip blank header col
+    if (i === 0) continue; // skip blank header — it has no corresponding horas column
     const indices = Array.from({ length: span }, (_, k) => colOffset + k);
     if (i === 1) originIndices = indices;
     else if (i === 2) destIndices = indices;
@@ -450,10 +449,17 @@ function renderResults(data, now) {
     const dias = (trip.dias || '').trim();
     const runsToday = dias in freqRunsToday ? freqRunsToday[dias] : true;
 
-    const mins = Math.round((depTime - now) / 60000);
+    // For today: calculate minutes from now; for future dates: all trips are valid
+    const realNow = new Date();
+    const mins = Math.round((depTime - realNow) / 60000);
     return { ...trip, depTime, mins, runsToday, departureStr, arrivalStr, stopNames };
   })
-  .filter(t => t && t.runsToday && t.mins > -5)
+  .filter(t => {
+    if (!t || !t.runsToday) return false;
+    // For today: only show trips not yet departed (allow 5 min grace)
+    // For future dates: show all trips on that day
+    return selectedDateMode === 'today' ? t.mins > -5 : true;
+  })
   .sort((a, b) => a.depTime - b.depTime)
   .slice(0, 12);
 
@@ -468,7 +474,8 @@ function renderResults(data, now) {
     const card = document.createElement('div');
     card.className = 'card planner-result-card';
 
-    const minsLabel = trip.mins <= 0 ? s('minsLabel', 0) : s('minsLabel', trip.mins);
+    const showCountdown = selectedDateMode === 'today';
+    const minsLabel = showCountdown ? (trip.mins <= 0 ? s('minsLabel', 0) : s('minsLabel', trip.mins)) : '';
     const minsClass = trip.mins <= 2 ? 'mins-now' : trip.mins <= 15 ? 'mins-soon' : 'mins-later';
 
     // Intermediate stops: any stop that's not in origin or dest columns and has a time
@@ -495,7 +502,7 @@ function renderResults(data, now) {
       <div class="departure-time-col">
         <span class="departure-sched">${escHtml(trip.departureStr)}</span>
         ${arrivalStr && arrivalStr !== '--' ? `<span class="planner-arrival">→ ${escHtml(arrivalStr)}</span>` : ''}
-        <span class="departure-mins ${minsClass}">${minsLabel}</span>
+        ${showCountdown ? `<span class="departure-mins ${minsClass}">${minsLabel}</span>` : ''}
       </div>
       <span class="departure-info-arrow">›</span>
     `;
@@ -526,12 +533,12 @@ function renderDirectConnections(data, now) {
 
   // Reuse the same nucleos-index parsing logic from renderResults
   const nucleos = data.nucleos || [];
-  let colOffset = 1;
+  let colOffset = 0;
   let originIndices = [];
   let destIndices = [];
   for (let i = 0; i < nucleos.length; i++) {
     const span = nucleos[i].colspan || 1;
-    if (i === 0) { colOffset += span; continue; }
+    if (i === 0) continue; // skip blank header — no corresponding horas column
     const indices = Array.from({ length: span }, (_, k) => colOffset + k);
     if (i === 1) originIndices = indices;
     else if (i === 2) destIndices = indices;
@@ -591,7 +598,7 @@ function renderDirectConnections(data, now) {
 
   if (!trips.length) return;
 
-  directSectionLabel.textContent = s('directConnections');
+  directSectionLabel.textContent = s('directConnections', selectedDateMode);
 
   trips.forEach(trip => {
     const isPast = trip.depTime < now;
