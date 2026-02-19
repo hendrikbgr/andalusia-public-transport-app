@@ -1,20 +1,22 @@
 // CTAN Bus Tracker — Service Worker (offline shell cache)
-const CACHE = 'ctan-shell-v1';
+const CACHE = 'ctan-shell-v2';
 const SHELL = [
-  '/home.html',
-  '/index.html',
-  '/station.html',
-  '/route.html',
-  '/planner.html',
-  '/map.html',
-  '/src/style.css',
-  '/src/js/i18n.js',
-  '/src/js/home.js',
-  '/src/js/index.js',
-  '/src/js/station.js',
-  '/src/js/route.js',
-  '/src/js/planner.js',
-  '/src/js/map.js',
+  './home.html',
+  './index.html',
+  './station.html',
+  './route.html',
+  './planner.html',
+  './map.html',
+  './timetable.html',
+  './src/style.css',
+  './src/js/i18n.js',
+  './src/js/home.js',
+  './src/js/app.js',
+  './src/js/station.js',
+  './src/js/route.js',
+  './src/js/planner.js',
+  './src/js/map.js',
+  './src/js/timetable.js',
 ];
 
 self.addEventListener('install', e =>
