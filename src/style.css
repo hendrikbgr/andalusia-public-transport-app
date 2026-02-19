@@ -1383,3 +1383,288 @@ html, body {
   color: var(--text-muted);
   font-size: 0.9rem;
 }
+
+/* Empty cells in timetable */
+.tt-cell-empty { color: var(--border); }
+
+/* Stop name column */
+.tt-stop-name {
+  text-align: left;
+  font-weight: 600;
+}
+
+/* ===== Home: section labels & settings button ===== */
+.home-section-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 20px 0 8px;
+}
+
+.settings-btn {
+  font-size: 1.3rem;
+  text-decoration: none;
+  line-height: 1;
+  padding: 2px 4px;
+  border-radius: 8px;
+  transition: opacity 0.15s;
+  flex-shrink: 0;
+}
+.settings-btn:hover { opacity: 0.75; }
+
+/* ===== Settings page ===== */
+.settings-section {
+  margin-bottom: 28px;
+}
+
+.settings-section-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 8px;
+}
+
+.settings-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  margin-bottom: 8px;
+}
+.settings-row-static { cursor: default; }
+
+.settings-row-body { flex: 1; min-width: 0; }
+.settings-row-title {
+  font-weight: 600;
+  font-size: 0.95rem;
+  margin-bottom: 2px;
+}
+.settings-row-desc {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Segmented control */
+.settings-seg {
+  display: flex;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.settings-seg-btn {
+  padding: 6px 14px;
+  background: var(--surface);
+  border: none;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.settings-seg-btn + .settings-seg-btn {
+  border-left: 1.5px solid var(--border);
+}
+.settings-seg-btn.active {
+  background: var(--brand);
+  color: #fff;
+}
+.settings-seg-btn:not(.active):hover {
+  background: var(--brand-light);
+  color: var(--brand);
+}
+
+/* Clear / action buttons */
+.settings-clear-btn,
+.settings-action-btn {
+  flex-shrink: 0;
+  background: none;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+.settings-clear-btn:hover,
+.settings-action-btn:hover {
+  border-color: var(--brand);
+  color: var(--brand);
+}
+
+/* Danger button */
+.settings-danger-btn {
+  display: block;
+  width: 100%;
+  padding: 12px 16px;
+  background: none;
+  border: 1.5px solid var(--red);
+  border-radius: var(--radius);
+  color: var(--red);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  margin-top: 4px;
+  transition: background 0.15s;
+}
+.settings-danger-btn:hover { background: var(--red-bg); }
+.settings-danger-btn.hidden { display: none !important; }
+
+/* Empty state */
+.settings-empty {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  padding: 10px 0 8px;
+}
+.settings-empty.hidden { display: none !important; }
+
+/* Saved stop row in settings */
+.settings-stop-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  margin-bottom: 8px;
+}
+.settings-stop-link {
+  flex: 1;
+  text-decoration: none;
+  color: inherit;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+.settings-stop-body { flex: 1; min-width: 0; }
+.settings-stop-name {
+  font-weight: 600;
+  font-size: 0.92rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.settings-stop-meta { font-size: 0.8rem; color: var(--text-muted); }
+.settings-stop-remove {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+.settings-stop-remove:hover { color: var(--red); background: var(--red-bg); }
+
+/* Toast notification */
+.settings-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1a1d23;
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: 20px;
+  font-size: 0.88rem;
+  font-weight: 500;
+  z-index: 999;
+  pointer-events: none;
+  white-space: nowrap;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+  animation: toast-in 0.2s ease;
+}
+.settings-toast.hidden { display: none !important; }
+@keyframes toast-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(8px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* ===== Line Timetable search page ===== */
+.ltt-search-box {
+  position: relative;
+  margin-bottom: 8px;
+}
+.ltt-search-box input {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 1rem;
+  background: var(--surface);
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.15s;
+}
+.ltt-search-box input:focus { border-color: var(--brand); }
+
+/* Line dropdown items */
+.ltt-line-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.ltt-dropdown-badge {
+  display: inline-block;
+  background: var(--brand);
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 6px;
+  flex-shrink: 0;
+  min-width: 44px;
+  text-align: center;
+}
+.ltt-no-results {
+  color: var(--text-muted);
+  font-style: italic;
+  pointer-events: none;
+}
+
+/* Line header in grid view */
+.ltt-line-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 16px;
+  padding: 14px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.ltt-line-badge {
+  background: var(--brand);
+  color: #fff;
+  font-size: 0.88rem;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: 8px;
+  flex-shrink: 0;
+  min-width: 52px;
+  text-align: center;
+}
+.ltt-line-name {
+  font-weight: 700;
+  font-size: 0.95rem;
+  margin-bottom: 2px;
+}
+.ltt-line-region {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}

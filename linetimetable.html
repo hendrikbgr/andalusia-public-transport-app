@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Line Timetables</title>
+  <link rel="stylesheet" href="src/style.css?v=5" />
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#1a6fdb" />
+</head>
+<body>
+  <div id="app">
+    <header class="app-header station-header">
+      <div class="header-inner">
+        <a href="home.html" class="back-link" title="Back">←</a>
+        <h1 id="ltt-title">Line Timetables</h1>
+        <button class="lang-toggle" id="lang-toggle" title="Switch language">EN</button>
+      </div>
+    </header>
+
+    <main class="main-content">
+
+      <!-- Step 1: region + search -->
+      <div id="ltt-step-search">
+
+        <!-- Region selector -->
+        <div id="ltt-region-wrapper">
+          <div class="step-label" id="ltt-region-label">Select region</div>
+          <div id="ltt-region-list" class="card-list">
+            <div class="loading-spinner"></div>
+          </div>
+        </div>
+
+        <!-- Search form (shown after region chosen) -->
+        <div id="ltt-search-form" class="hidden">
+          <button class="back-btn" id="ltt-back-region">← Back</button>
+          <div class="step-label" id="ltt-chosen-region">Region</div>
+          <div class="ltt-search-box">
+            <input type="search" id="ltt-line-input"
+              autocomplete="off" autocorrect="off" spellcheck="false"
+              placeholder="Search by line number or name…" />
+            <div id="ltt-line-results" class="planner-dropdown hidden"></div>
+          </div>
+          <p class="hint" id="ltt-search-hint">Type a line code (e.g. M-221) or part of the name</p>
+        </div>
+
+      </div>
+
+      <!-- Step 2: timetable grid (reuses timetable.js logic inline) -->
+      <div id="ltt-step-grid" class="hidden">
+        <button class="back-btn" id="ltt-back-search">← Back</button>
+
+        <div class="ltt-line-header">
+          <span class="ltt-line-badge" id="ltt-line-badge"></span>
+          <div>
+            <div class="ltt-line-name" id="ltt-line-name"></div>
+            <div class="ltt-line-region" id="ltt-line-region"></div>
+          </div>
+        </div>
+
+        <!-- Direction tabs -->
+        <div id="ltt-direction-tabs" class="direction-tabs"></div>
+
+        <!-- Frequency tabs -->
+        <div id="ltt-freq-tabs" class="tt-freq-tabs"></div>
+
+        <!-- Grid -->
+        <div id="ltt-grid-wrapper" class="tt-grid-wrapper">
+          <div class="loading-spinner"></div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <script src="src/js/i18n.js?v=2"></script>
+  <script src="src/js/linetimetable.js?v=2"></script>
+  <script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js');</script>
+</body>
+</html>

@@ -1,12 +1,14 @@
-const langToggle = document.getElementById('lang-toggle');
-const appTitle = document.getElementById('app-title');
-const homeGreeting = document.getElementById('home-greeting');
-const featTimetable = document.getElementById('feat-timetable');
+const langToggle      = document.getElementById('lang-toggle');
+const appTitle        = document.getElementById('app-title');
+const homeGreeting    = document.getElementById('home-greeting');
+const featTimetable   = document.getElementById('feat-timetable');
 const featTimetableDesc = document.getElementById('feat-timetable-desc');
-const featPlanner = document.getElementById('feat-planner');
+const featLineTimetable     = document.getElementById('feat-linetimetable');
+const featLineTimetableDesc = document.getElementById('feat-linetimetable-desc');
+const featPlanner     = document.getElementById('feat-planner');
 const featPlannerDesc = document.getElementById('feat-planner-desc');
-const featMap = document.getElementById('feat-map');
-const featMapDesc = document.getElementById('feat-map-desc');
+const featMap         = document.getElementById('feat-map');
+const featMapDesc     = document.getElementById('feat-map-desc');
 
 const HOME_STRINGS = {
   en: {
@@ -20,12 +22,16 @@ const HOME_STRINGS = {
       if (h < 18) return 'Good afternoon';
       return 'Good evening';
     },
-    featTimetable: 'Live Departures',
-    featTimetableDesc: 'See real-time buses at any stop',
-    featPlanner: 'Route Planner',
-    featPlannerDesc: 'Find buses between two towns',
-    featMap: 'Stop Map',
-    featMapDesc: 'Browse all stops on a map',
+    featTimetable:          'Live Departures',
+    featTimetableDesc:      'See real-time buses at any stop',
+    featLineTimetable:      'Line Timetables',
+    featLineTimetableDesc:  'Search full schedules by line',
+    featPlanner:            'Route Planner',
+    featPlannerDesc:        'Find buses between two towns',
+    featMap:                'Stop Map',
+    featMapDesc:            'Browse all stops on a map',
+    savedStopsLabel:        'Saved Stops',
+    featuresLabel:          'Features',
   },
   es: {
     appTitle: 'Rastreador de Autobús',
@@ -38,12 +44,16 @@ const HOME_STRINGS = {
       if (h < 18) return 'Buenas tardes';
       return 'Buenas noches';
     },
-    featTimetable: 'Salidas en Vivo',
-    featTimetableDesc: 'Ver autobuses en tiempo real en cualquier parada',
-    featPlanner: 'Planificador de Ruta',
-    featPlannerDesc: 'Encuentra autobuses entre dos localidades',
-    featMap: 'Mapa de Paradas',
-    featMapDesc: 'Explora todas las paradas en el mapa',
+    featTimetable:          'Salidas en Vivo',
+    featTimetableDesc:      'Ver autobuses en tiempo real en cualquier parada',
+    featLineTimetable:      'Horarios de Líneas',
+    featLineTimetableDesc:  'Busca horarios completos por línea',
+    featPlanner:            'Planificador de Ruta',
+    featPlannerDesc:        'Encuentra autobuses entre dos localidades',
+    featMap:                'Mapa de Paradas',
+    featMapDesc:            'Explora todas las paradas en el mapa',
+    savedStopsLabel:        'Paradas Guardadas',
+    featuresLabel:          'Funciones',
   },
 };
 
@@ -52,19 +62,22 @@ function applyLang() {
   const s = HOME_STRINGS[lang] || HOME_STRINGS.en;
   langToggle.textContent = lang === 'en' ? 'ES' : 'EN';
   document.documentElement.lang = lang;
-  appTitle.textContent = s.appTitle;
-  homeGreeting.textContent = s.greeting();
-  featTimetable.textContent = s.featTimetable;
-  featTimetableDesc.textContent = s.featTimetableDesc;
-  featPlanner.textContent = s.featPlanner;
-  featPlannerDesc.textContent = s.featPlannerDesc;
-  featMap.textContent = s.featMap;
-  featMapDesc.textContent = s.featMapDesc;
+  appTitle.textContent              = s.appTitle;
+  homeGreeting.textContent          = s.greeting();
+  featTimetable.textContent         = s.featTimetable;
+  featTimetableDesc.textContent     = s.featTimetableDesc;
+  featLineTimetable.textContent     = s.featLineTimetable;
+  featLineTimetableDesc.textContent = s.featLineTimetableDesc;
+  featPlanner.textContent           = s.featPlanner;
+  featPlannerDesc.textContent       = s.featPlannerDesc;
+  featMap.textContent               = s.featMap;
+  featMapDesc.textContent           = s.featMapDesc;
+  document.getElementById('saved-stops-label').textContent    = s.savedStopsLabel;
+  document.getElementById('home-features-label').textContent  = s.featuresLabel;
   // Update banner text in case it's visible and lang changed
-  const s2 = HOME_STRINGS[lang] || HOME_STRINGS.en;
-  document.getElementById('pwa-banner-text').textContent = s2.pwaInstallMsg;
-  document.getElementById('pwa-install-btn').textContent = s2.pwaInstall;
-  document.getElementById('pwa-dismiss-btn').textContent = s2.pwaDismiss;
+  document.getElementById('pwa-banner-text').textContent  = s.pwaInstallMsg;
+  document.getElementById('pwa-install-btn').textContent  = s.pwaInstall;
+  document.getElementById('pwa-dismiss-btn').textContent  = s.pwaDismiss;
 }
 
 langToggle.addEventListener('click', () => {
@@ -73,6 +86,47 @@ langToggle.addEventListener('click', () => {
 });
 
 applyLang();
+
+// ---- Saved stops ----
+function getSavedStops() {
+  try { return JSON.parse(getCookie('savedStops') || '[]'); } catch { return []; }
+}
+
+function renderSavedStops() {
+  const stops = getSavedStops();
+  const section = document.getElementById('saved-stops-section');
+  const list    = document.getElementById('saved-stops-list');
+
+  if (!stops.length) {
+    section.classList.add('hidden');
+    return;
+  }
+
+  section.classList.remove('hidden');
+  list.innerHTML = '';
+
+  stops.forEach(stop => {
+    const card = document.createElement('a');
+    card.className = 'saved-stop-card';
+    card.href = `station.html?c=${encodeURIComponent(stop.idConsorcio)}&s=${encodeURIComponent(stop.idParada)}`;
+    card.innerHTML = `
+      <div class="saved-stop-card-body">
+        <div class="saved-stop-card-name">${escHtml(stop.nombre || stop.idParada)}</div>
+        <div class="saved-stop-card-meta">${escHtml(stop.nucleo || stop.municipio || '')}</div>
+      </div>
+      <span class="card-arrow">›</span>
+    `;
+    list.appendChild(card);
+  });
+}
+
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+renderSavedStops();
 
 // ---- PWA Install Banner ----
 let deferredInstallPrompt = null;

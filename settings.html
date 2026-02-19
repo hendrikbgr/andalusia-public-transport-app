@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Settings</title>
+  <link rel="stylesheet" href="src/style.css?v=5" />
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#1a6fdb" />
+</head>
+<body>
+  <div id="app">
+    <header class="app-header station-header">
+      <div class="header-inner">
+        <a href="home.html" class="back-link" title="Back">←</a>
+        <h1 id="settings-title">Settings</h1>
+        <button class="lang-toggle" id="lang-toggle" title="Switch language">EN</button>
+      </div>
+    </header>
+
+    <main class="main-content">
+
+      <!-- Language -->
+      <div class="settings-section">
+        <div class="settings-section-label" id="settings-lang-label">Language</div>
+        <div class="settings-row">
+          <div class="settings-row-body">
+            <div class="settings-row-title" id="settings-lang-title">App language</div>
+            <div class="settings-row-desc" id="settings-lang-desc">Choose display language</div>
+          </div>
+          <div class="settings-seg" id="lang-seg">
+            <button class="settings-seg-btn active" data-val="en">EN</button>
+            <button class="settings-seg-btn" data-val="es">ES</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Planner defaults -->
+      <div class="settings-section">
+        <div class="settings-section-label" id="settings-planner-label">Route Planner</div>
+
+        <div class="settings-row">
+          <div class="settings-row-body">
+            <div class="settings-row-title" id="settings-datemode-title">Default date</div>
+            <div class="settings-row-desc" id="settings-datemode-desc">Which day to search by default</div>
+          </div>
+          <div class="settings-seg" id="datemode-seg">
+            <button class="settings-seg-btn active" data-val="today" id="seg-today">Today</button>
+            <button class="settings-seg-btn" data-val="tomorrow" id="seg-tomorrow">Tomorrow</button>
+          </div>
+        </div>
+
+        <div class="settings-row" id="default-region-row">
+          <div class="settings-row-body">
+            <div class="settings-row-title" id="settings-region-title">Default region</div>
+            <div class="settings-row-desc" id="default-region-name">None set</div>
+          </div>
+          <button class="settings-clear-btn" id="clear-region-btn" id="settings-clear-region">Clear</button>
+        </div>
+      </div>
+
+      <!-- Saved stops -->
+      <div class="settings-section">
+        <div class="settings-section-label" id="settings-stops-label">Saved Stops</div>
+        <div id="settings-saved-list"></div>
+        <p class="settings-empty" id="settings-stops-empty">No saved stops</p>
+        <button class="settings-danger-btn" id="clear-stops-btn">
+          <span id="settings-clear-stops-text">Clear all saved stops</span>
+        </button>
+      </div>
+
+      <!-- App info -->
+      <div class="settings-section">
+        <div class="settings-section-label" id="settings-about-label">About</div>
+        <div class="settings-row settings-row-static">
+          <div class="settings-row-body">
+            <div class="settings-row-title">CTAN Bus Tracker</div>
+            <div class="settings-row-desc" id="settings-about-desc">Data from api.ctan.es · 9 Andalusia consortiums</div>
+          </div>
+        </div>
+        <div class="settings-row settings-row-static">
+          <div class="settings-row-body">
+            <div class="settings-row-title" id="settings-cache-title">Clear app cache</div>
+            <div class="settings-row-desc" id="settings-cache-desc">Forces latest files to reload</div>
+          </div>
+          <button class="settings-action-btn" id="clear-cache-btn" id="settings-cache-btn-text">Clear</button>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Toast -->
+  <div id="settings-toast" class="settings-toast hidden"></div>
+
+  <script src="src/js/i18n.js?v=2"></script>
+  <script src="src/js/settings.js?v=1"></script>
+  <script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js');</script>
+</body>
+</html>
