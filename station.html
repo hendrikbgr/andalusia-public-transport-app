@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Live Departures</title>
-  <link rel="stylesheet" href="src/style.css?v=6" />
+  <link rel="stylesheet" href="src/style.css?v=7" />
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#1a6fdb" />
   <link rel="apple-touch-icon" href="icons/icon-180.png" />
@@ -41,14 +41,19 @@
       </div>
     </div>
 
-    <main class="main-content station-main">
+    <!-- Pull-to-refresh indicator -->
+    <div id="ptr-indicator" class="ptr-indicator hidden">
+      <div class="ptr-spinner"></div>
+    </div>
+
+    <main class="main-content station-main" id="station-main">
       <!-- Live clock + refresh indicator -->
       <div class="status-bar">
         <span id="live-clock" class="live-clock"></span>
         <span id="refresh-indicator" class="refresh-indicator">
           <span class="refresh-dot"></span> <span id="live-label">Live</span>
         </span>
-        <span id="countdown" class="countdown"></span>
+        <button id="refresh-btn" class="refresh-btn" title="Refresh">↻</button>
       </div>
 
       <!-- Show on map -->
@@ -81,7 +86,7 @@
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="src/js/i18n.js?v=2"></script>
-  <script src="src/js/station.js?v=5"></script>
+  <script src="src/js/station.js?v=6"></script>
   <script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js');</script>
 </body>
 </html>

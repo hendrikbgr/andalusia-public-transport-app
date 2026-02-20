@@ -273,10 +273,47 @@ html, body {
   50% { opacity: 0.3; }
 }
 
-.countdown {
-  font-variant-numeric: tabular-nums;
+/* Refresh button in status bar */
+.refresh-btn {
+  background: none;
+  border: none;
   color: var(--text-muted);
-  font-size: 0.75rem;
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 6px;
+  transition: color 0.15s, transform 0.15s;
+  margin-left: auto;
+}
+.refresh-btn:hover { color: var(--brand); }
+.refresh-btn.spinning {
+  animation: spin 0.7s linear infinite;
+  color: var(--brand);
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Pull-to-refresh indicator */
+.ptr-indicator {
+  position: absolute;
+  top: 0;
+  left: 0; right: 0;
+  display: flex;
+  justify-content: center;
+  padding: 8px 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+  z-index: 10;
+}
+.ptr-indicator.hidden { display: none !important; }
+.ptr-spinner {
+  width: 24px; height: 24px;
+  border: 3px solid var(--border);
+  border-top-color: var(--brand);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
 }
 
 /* ===== Departures board ===== */
@@ -440,7 +477,7 @@ html, body {
 }
 
 /* ===== Station main ===== */
-.station-main { padding-top: 12px; }
+.station-main { padding-top: 12px; position: relative; }
 
 /* ===== Home screen ===== */
 .home-content { padding-top: 20px; }
@@ -669,28 +706,43 @@ html, body {
 /* ===== Route page ===== */
 .direction-tabs {
   display: flex;
+  flex-direction: column;
   gap: 8px;
   margin-bottom: 12px;
 }
 
 /* Outbound / Inbound toggle buttons (timetable pages) */
 .direction-tab {
-  flex: 1;
-  padding: 9px 12px;
+  width: 100%;
+  padding: 11px 14px;
   border: 1.5px solid var(--border);
   border-radius: 10px;
   background: var(--surface);
   color: var(--text-muted);
-  font-size: 0.88rem;
+  font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
-  text-align: center;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 10px;
   transition: background 0.15s, border-color 0.15s, color 0.15s;
 }
+.direction-tab::before {
+  content: '';
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--border);
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
 .direction-tab.active {
-  background: var(--brand);
+  background: var(--brand-light, #e8f0fd);
   border-color: var(--brand);
-  color: #fff;
+  color: var(--brand);
+}
+.direction-tab.active::before {
+  background: var(--brand);
 }
 .direction-tab:not(.active):hover {
   border-color: var(--brand);

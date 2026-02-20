@@ -1,5 +1,4 @@
 const API = 'https://api.ctan.es/v1/Consorcios';
-const REFRESH_INTERVAL = 30; // seconds
 
 // ---- Parse URL params ----
 const params = new URLSearchParams(location.search);
@@ -25,7 +24,8 @@ const scanningIndicator = document.getElementById('scanning-indicator');
 const scanningText = document.getElementById('scanning-text');
 const liveClock = document.getElementById('live-clock');
 const liveLabel = document.getElementById('live-label');
-const countdownEl = document.getElementById('countdown');
+const refreshBtn = document.getElementById('refresh-btn');
+const ptrIndicator = document.getElementById('ptr-indicator');
 const qrToggle = document.getElementById('qr-toggle');
 const qrOverlay = document.getElementById('qr-overlay');
 const qrClose = document.getElementById('qr-close');
@@ -51,7 +51,6 @@ function applyLang() {
   if (qrClose) qrClose.textContent = t('close');
   if (!showOnMapBtn.classList.contains('hidden')) showOnMapBtn.textContent = t('showOnMap');
   if (!saveStopBtn.classList.contains('hidden')) renderSaveButton();
-  updateCountdown();
 }
 
 langToggle.addEventListener('click', () => {
@@ -63,11 +62,10 @@ langToggle.addEventListener('click', () => {
 
 // ---- State ----
 let stopInfo = null;
-let countdownTimer = null;
-let secondsLeft = REFRESH_INTERVAL;
 let qrGenerated = false;
 let lastServices = null;
 let lastNow = null;
+let isRefreshing = false;
 
 // ---- Init ----
 applyLang();
@@ -75,9 +73,9 @@ initPage();
 
 async function initPage() {
   startClock();
+  initRefreshControls();
   await loadStopInfo();
   await loadDepartures();
-  scheduleRefresh();
 }
 
 // ---- Stop info ----
@@ -505,24 +503,64 @@ function updateClock() {
   liveClock.textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 }
 
-// ---- Auto-refresh ----
-function scheduleRefresh() {
-  secondsLeft = REFRESH_INTERVAL;
-  updateCountdown();
+// ---- Refresh controls (button + pull-to-refresh) ----
+function initRefreshControls() {
+  // Refresh button
+  refreshBtn.addEventListener('click', triggerRefresh);
 
-  clearInterval(countdownTimer);
-  countdownTimer = setInterval(() => {
-    secondsLeft--;
-    updateCountdown();
-    if (secondsLeft <= 0) {
-      clearInterval(countdownTimer);
-      loadDepartures(true).then(scheduleRefresh);
+  // Pull-to-refresh
+  const main = document.getElementById('station-main');
+  let touchStartY = 0;
+  let pulling = false;
+  const PULL_THRESHOLD = 72; // px needed to trigger
+
+  main.addEventListener('touchstart', e => {
+    // Only start pull if scrolled to top
+    if (main.scrollTop === 0) touchStartY = e.touches[0].clientY;
+    else touchStartY = 0;
+  }, { passive: true });
+
+  main.addEventListener('touchmove', e => {
+    if (!touchStartY) return;
+    const dy = e.touches[0].clientY - touchStartY;
+    if (dy > 10 && !isRefreshing) {
+      pulling = true;
+      const progress = Math.min(dy / PULL_THRESHOLD, 1);
+      ptrIndicator.classList.remove('hidden');
+      ptrIndicator.style.opacity = progress;
+      ptrIndicator.style.transform = `translateY(${Math.min(dy * 0.4, 32)}px)`;
     }
-  }, 1000);
+  }, { passive: true });
+
+  main.addEventListener('touchend', e => {
+    if (!touchStartY) return;
+    const dy = e.changedTouches[0].clientY - touchStartY;
+    ptrIndicator.style.opacity = '';
+    ptrIndicator.style.transform = '';
+    touchStartY = 0;
+    if (pulling && dy >= PULL_THRESHOLD && !isRefreshing) {
+      triggerRefresh();
+    } else {
+      ptrIndicator.classList.add('hidden');
+    }
+    pulling = false;
+  }, { passive: true });
 }
 
-function updateCountdown() {
-  countdownEl.textContent = t('refreshIn', secondsLeft);
+async function triggerRefresh() {
+  if (isRefreshing) return;
+  isRefreshing = true;
+  refreshBtn.classList.add('spinning');
+  ptrIndicator.classList.remove('hidden');
+  ptrIndicator.style.opacity = '1';
+  ptrIndicator.style.transform = 'translateY(32px)';
+
+  await loadDepartures(true);
+
+  isRefreshing = false;
+  refreshBtn.classList.remove('spinning');
+  ptrIndicator.classList.add('hidden');
+  ptrIndicator.style.transform = '';
 }
 
 // ---- QR Code ----
