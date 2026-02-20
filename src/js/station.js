@@ -276,13 +276,27 @@ function patchDepartures(services, now) {
   const oldSentinel = document.getElementById('load-more-sentinel');
   if (oldSentinel) oldSentinel.remove();
 
-  // Build the desired card order, reusing existing DOM nodes where possible
+  // Build the set of keys that belong in the new sorted list
+  const newKeys = new Set(enriched.map(s => `${s.idLinea}|${s.servicio}`));
+
+  // Remove cards that are absent from the new list AND have already departed.
+  // Cards from future windows not yet fetched are kept in existingCards so they
+  // can be reused when those windows arrive (avoids mid-sweep blanking).
+  Object.entries(existingCards).forEach(([key, el]) => {
+    if (!newKeys.has(key)) {
+      const scheduled = parseServiceTime(el.dataset.servicio, now);
+      const mins = Math.round((scheduled - now) / 60000);
+      if (mins < -1) delete existingCards[key]; // mark as truly gone
+    }
+  });
+
+  // Build the desired card order, reusing existing DOM nodes where possible.
+  // replaceChildren() will re-order the board atomically so sorted order is
+  // always respected — no stale cards can sit at the top from a previous render.
   const fragment = document.createDocumentFragment();
-  const newKeys = new Set();
 
   enriched.forEach(s => {
     const key = `${s.idLinea}|${s.servicio}`;
-    newKeys.add(key);
     if (existingCards[key]) {
       // Card already exists — just tick its minute label
       const card = existingCards[key];
@@ -299,17 +313,14 @@ function patchDepartures(services, now) {
     }
   });
 
-  // Only remove a card if it's both absent from the new list AND already departed.
-  // This prevents mid-sweep removal of cards from windows not yet fetched.
+  // Also carry over any surviving future-window cards that aren't in enriched yet,
+  // appended after the sorted block so they don't disrupt chronological order.
   Object.entries(existingCards).forEach(([key, el]) => {
-    if (!newKeys.has(key)) {
-      const scheduled = parseServiceTime(el.dataset.servicio, now);
-      const mins = Math.round((scheduled - now) / 60000);
-      if (mins < -1) el.remove();
-    }
+    if (!newKeys.has(key)) fragment.appendChild(el);
   });
 
-  departuresBoard.appendChild(fragment);
+  // Atomically replace all board content — guarantees sorted order every time.
+  departuresBoard.replaceChildren(fragment);
 }
 
 // Finds the first non-empty window starting from `now`.
