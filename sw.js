@@ -1,5 +1,5 @@
 // CTAN Bus Tracker — Service Worker (offline shell cache)
-const CACHE = 'ctan-shell-v3';
+const CACHE = 'ctan-shell-v4';
 const SHELL = [
   './home.html',
   './index.html',
@@ -44,4 +44,9 @@ self.addEventListener('fetch', e => {
   e.respondWith(
     caches.match(e.request).then(cached => cached || fetch(e.request))
   );
+});
+
+// Allow pages to trigger immediate activation of a waiting SW
+self.addEventListener('message', e => {
+  if (e.data === 'skipWaiting') self.skipWaiting();
 });

@@ -16,6 +16,9 @@ const HOME_STRINGS = {
     pwaInstallMsg: 'Install for quick access',
     pwaInstall: 'Install',
     pwaDismiss: '✕ Not now',
+    updateMsg: '🎉 Update available',
+    updateReload: 'Reload',
+    updateDismiss: '✕',
     greeting: () => {
       const h = new Date().getHours();
       if (h < 12) return 'Good morning';
@@ -38,6 +41,9 @@ const HOME_STRINGS = {
     pwaInstallMsg: 'Instalar para acceso rápido',
     pwaInstall: 'Instalar',
     pwaDismiss: '✕ Ahora no',
+    updateMsg: '🎉 Actualización disponible',
+    updateReload: 'Recargar',
+    updateDismiss: '✕',
     greeting: () => {
       const h = new Date().getHours();
       if (h < 12) return 'Buenos días';
@@ -78,6 +84,9 @@ function applyLang() {
   document.getElementById('pwa-banner-text').textContent  = s.pwaInstallMsg;
   document.getElementById('pwa-install-btn').textContent  = s.pwaInstall;
   document.getElementById('pwa-dismiss-btn').textContent  = s.pwaDismiss;
+  document.getElementById('update-banner-text').textContent  = s.updateMsg;
+  document.getElementById('update-reload-btn').textContent   = s.updateReload;
+  document.getElementById('update-dismiss-btn').textContent  = s.updateDismiss;
 }
 
 langToggle.addEventListener('click', () => {
@@ -160,3 +169,53 @@ document.getElementById('pwa-dismiss-btn').addEventListener('click', () => {
 });
 
 initPWABanner();
+
+// ---- SW Update Banner ----
+// When the service worker has a new version waiting, show a banner
+// so the user can reload immediately instead of waiting for next launch.
+function initUpdateBanner() {
+  if (!('serviceWorker' in navigator)) return;
+
+  const banner       = document.getElementById('update-banner');
+  const reloadBtn    = document.getElementById('update-reload-btn');
+  const dismissBtn   = document.getElementById('update-dismiss-btn');
+
+  let waitingSW = null;
+
+  function showUpdateBanner(sw) {
+    waitingSW = sw;
+    banner.classList.remove('hidden');
+  }
+
+  navigator.serviceWorker.ready.then(reg => {
+    // Case 1: a new SW is already waiting when page loads
+    if (reg.waiting) {
+      showUpdateBanner(reg.waiting);
+    }
+
+    // Case 2: a new SW installs while the page is open
+    reg.addEventListener('updatefound', () => {
+      const newSW = reg.installing;
+      if (!newSW) return;
+      newSW.addEventListener('statechange', () => {
+        if (newSW.state === 'installed' && navigator.serviceWorker.controller) {
+          showUpdateBanner(newSW);
+        }
+      });
+    });
+  });
+
+  // Reload button: tell waiting SW to skip waiting, then reload
+  reloadBtn.addEventListener('click', () => {
+    if (waitingSW) waitingSW.postMessage('skipWaiting');
+    // Once the new SW activates it will control the page — reload to use it
+    navigator.serviceWorker.addEventListener('controllerchange', () => location.reload());
+  });
+
+  // Dismiss button: just hide the banner (update will apply on next relaunch)
+  dismissBtn.addEventListener('click', () => {
+    banner.classList.add('hidden');
+  });
+}
+
+initUpdateBanner();
