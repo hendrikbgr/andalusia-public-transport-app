@@ -1,0 +1,60 @@
+name: Service Worker Cache Check
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "**.html"
+      - "src/js/**.js"
+
+jobs:
+  check:
+    name: Check sw.js is up to date
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # need full history to diff against base branch
+
+      - name: Check if sw.js was updated alongside new/changed files
+        id: sw_check
+        run: |
+          BASE=${{ github.event.pull_request.base.sha }}
+          HEAD=${{ github.event.pull_request.head.sha }}
+
+          # Files changed in this PR (HTML or src/js/*.js, excluding sw.js itself)
+          CHANGED=$(git diff --name-only "$BASE" "$HEAD" \
+            | grep -E '\.(html)$|^src/js/.+\.js$' \
+            | grep -v 'sw\.js' || true)
+
+          # Was sw.js itself touched?
+          SW_TOUCHED=$(git diff --name-only "$BASE" "$HEAD" | grep 'sw\.js' || true)
+
+          if [ -n "$CHANGED" ] && [ -z "$SW_TOUCHED" ]; then
+            echo "warning=true" >> "$GITHUB_OUTPUT"
+            echo "changed_files=$CHANGED" >> "$GITHUB_OUTPUT"
+          else
+            echo "warning=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Post warning comment
+        if: steps.sw_check.outputs.warning == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const changed = `${{ steps.sw_check.outputs.changed_files }}`;
+            const files = changed.split('\n').filter(Boolean).map(f => `- \`${f}\``).join('\n');
+            await github.rest.issues.createComment({
+              ...context.repo,
+              issue_number: context.issue.number,
+              body: `## ⚠️ Service Worker cache may be out of date
+
+            The following files were added or changed but \`sw.js\` was **not** updated:
+
+            ${files}
+
+            If any of these are new pages or scripts that should work offline, bump the \`CACHE\` version in \`sw.js\` and add the file to the \`SHELL\` array.
+
+            _If these are existing files with no offline impact, you can safely ignore this._`,
+            });
