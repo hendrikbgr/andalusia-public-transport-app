@@ -32,6 +32,11 @@ const STRINGS = {
     minsLabel:       m => m <= 0 ? 'Now' : m === 1 ? 'in 1 min' : `in ${m} min`,
     passesThrough:   'via',
     linesHeading:    'Lines serving this destination:',
+    stepBoard:       'Board',
+    stepTransfer:    'Transfer',
+    stepArrive:      'Arrive',
+    stepWait:        mins => `~${mins} min wait`,
+    viewOnMap:       '📍 View on map',
   },
   es: {
     journeyTitle:    'Planificador de Viaje',
@@ -59,6 +64,11 @@ const STRINGS = {
     minsLabel:       m => m <= 0 ? 'Ahora' : m === 1 ? 'en 1 min' : `en ${m} min`,
     passesThrough:   'vía',
     linesHeading:    'Líneas que sirven este destino:',
+    stepBoard:       'Embarcar',
+    stepTransfer:    'Transbordo',
+    stepArrive:      'Llegada',
+    stepWait:        mins => `~${mins} min espera`,
+    viewOnMap:       '📍 Ver en el mapa',
   },
 };
 
@@ -103,6 +113,9 @@ const dateBtnToday        = document.getElementById('date-btn-today');
 const dateBtnTomorrow     = document.getElementById('date-btn-tomorrow');
 const dateBtnPick         = document.getElementById('date-btn-pick');
 const datePickerInput     = document.getElementById('date-picker-input');
+const journeySheetBackdrop = document.getElementById('journey-sheet-backdrop');
+const journeyDetailSheet   = document.getElementById('journey-detail-sheet');
+const journeySheetContent  = document.getElementById('journey-sheet-content');
 
 // ---- State ----
 let currentConsorcio  = null;
@@ -694,8 +707,84 @@ function renderItineraries(itineraries, now) {
       `;
     }
 
+    card.style.cursor = 'pointer';
+    card.addEventListener('click', () => openSheet(buildSheetHtml(itin)));
     itineraryList.appendChild(card);
   });
+}
+
+// ---- Detail bottom sheet ----
+function openSheet(html) {
+  journeySheetContent.innerHTML = html;
+  journeySheetBackdrop.classList.remove('hidden');
+  journeyDetailSheet.classList.remove('hidden');
+  requestAnimationFrame(() => {
+    journeySheetBackdrop.classList.add('open');
+    journeyDetailSheet.classList.add('open');
+  });
+}
+
+function closeSheet() {
+  journeySheetBackdrop.classList.remove('open');
+  journeyDetailSheet.classList.remove('open');
+  setTimeout(() => {
+    journeySheetBackdrop.classList.add('hidden');
+    journeyDetailSheet.classList.add('hidden');
+  }, 280);
+}
+
+journeySheetBackdrop.addEventListener('click', closeSheet);
+
+function stepHtml(iconClass, iconEmoji, action, main, sub, time) {
+  return `
+    <div class="journey-step">
+      <div class="journey-step-icon ${escHtml(iconClass)}">${iconEmoji}</div>
+      <div class="journey-step-body">
+        <div class="journey-step-action">${escHtml(action)}</div>
+        <div class="journey-step-main">${escHtml(main)}</div>
+        ${sub ? `<div class="journey-step-sub">${escHtml(sub)}</div>` : ''}
+      </div>
+      ${time ? `<div class="journey-step-time">${escHtml(time)}</div>` : ''}
+    </div>`;
+}
+
+function buildSheetHtml(itin) {
+  const cid = currentConsorcio.idConsorcio;
+  const mapUrl = `map.html?c=${cid}`;
+  let html = '';
+
+  if (itin.type === 'direct') {
+    const { leg1 } = itin;
+    html += stepHtml('', '🚌', s('stepBoard'),
+      `${escHtml(leg1.codigo || '')} → ${escHtml(selectedTo.nombre)}`,
+      escHtml(leg1.dias || ''),
+      leg1.depStr || '');
+    html += stepHtml('arrive', '✓', s('stepArrive'),
+      escHtml(selectedTo.nombre),
+      '',
+      leg1.arrStr || '—');
+  } else {
+    const { leg1, leg2, transferNucleo, waitMins } = itin;
+    html += stepHtml('', '🚌', s('stepBoard'),
+      `${escHtml(leg1.codigo || '')} → ${escHtml(transferNucleo.nombre)}`,
+      escHtml(leg1.dias || ''),
+      leg1.depStr || '');
+    html += stepHtml('transfer', '⇄', s('stepTransfer'),
+      escHtml(transferNucleo.nombre),
+      s('stepWait', waitMins),
+      leg1.arrStr || '');
+    html += stepHtml('', '🚌', s('stepBoard'),
+      `${escHtml(leg2.codigo || '')} → ${escHtml(selectedTo.nombre)}`,
+      escHtml(leg2.dias || ''),
+      leg2.depStr || '');
+    html += stepHtml('arrive', '✓', s('stepArrive'),
+      escHtml(selectedTo.nombre),
+      '',
+      leg2.arrStr || '—');
+  }
+
+  html += `<a href="${escHtml(mapUrl)}" class="journey-map-btn">${s('viewOnMap')}</a>`;
+  return html;
 }
 
 // ---- Navigation ----
