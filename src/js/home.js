@@ -7,6 +7,8 @@ const featLineTimetable     = document.getElementById('feat-linetimetable');
 const featLineTimetableDesc = document.getElementById('feat-linetimetable-desc');
 const featPlanner     = document.getElementById('feat-planner');
 const featPlannerDesc = document.getElementById('feat-planner-desc');
+const featJourney     = document.getElementById('feat-journey');
+const featJourneyDesc = document.getElementById('feat-journey-desc');
 const featMap         = document.getElementById('feat-map');
 const featMapDesc     = document.getElementById('feat-map-desc');
 
@@ -31,6 +33,8 @@ const HOME_STRINGS = {
     featLineTimetableDesc:  'Search full schedules by line',
     featPlanner:            'Route Planner',
     featPlannerDesc:        'Find buses between two towns',
+    featJourney:            'Journey Planner',
+    featJourneyDesc:        'Find routes with transfers',
     featMap:                'Stop Map',
     featMapDesc:            'Browse all stops on a map',
     savedStopsLabel:        'Saved Stops',
@@ -56,6 +60,8 @@ const HOME_STRINGS = {
     featLineTimetableDesc:  'Busca horarios completos por línea',
     featPlanner:            'Planificador de Ruta',
     featPlannerDesc:        'Encuentra autobuses entre dos localidades',
+    featJourney:            'Planificador de Viaje',
+    featJourneyDesc:        'Encuentra rutas con transbordos',
     featMap:                'Mapa de Paradas',
     featMapDesc:            'Explora todas las paradas en el mapa',
     savedStopsLabel:        'Paradas Guardadas',
@@ -76,6 +82,8 @@ function applyLang() {
   featLineTimetableDesc.textContent = s.featLineTimetableDesc;
   featPlanner.textContent           = s.featPlanner;
   featPlannerDesc.textContent       = s.featPlannerDesc;
+  featJourney.textContent           = s.featJourney;
+  featJourneyDesc.textContent       = s.featJourneyDesc;
   featMap.textContent               = s.featMap;
   featMapDesc.textContent           = s.featMapDesc;
   document.getElementById('saved-stops-label').textContent    = s.savedStopsLabel;
