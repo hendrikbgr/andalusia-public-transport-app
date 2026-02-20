@@ -28,6 +28,22 @@ const SETTINGS_STRINGS = {
     toastStopsCleared:  'All saved stops cleared',
     toastCacheCleared:  'Cache cleared — reload to apply',
     removeStop:       '✕',
+    installLabel:         'App',
+    installTitle:         'Add to Home Screen',
+    installDesc:          'Install the app for quick access',
+    installBtnView:       'View',
+    installGuideTitle:    'Add to Home Screen',
+    installIosIntro:      'Follow these steps in Safari:',
+    installIosStep1:      'Open this page in Safari (not Chrome)',
+    installIosStep2:      'Tap the Share button (□↑) at the bottom of the screen',
+    installIosStep3:      'Scroll down and tap "Add to Home Screen"',
+    installIosStep4:      'Tap "Add" in the top-right corner to confirm',
+    installIosNote:       'ⓘ Chrome on iOS cannot install apps. You must use Safari.',
+    installAndroidIntro:  'Follow these steps in Chrome:',
+    installAndroidStep1:  'Tap the menu (⋮) in the top-right corner',
+    installAndroidStep2:  'Tap "Add to Home screen"',
+    installAndroidStep3:  'Tap "Add" to confirm',
+    installOtherIntro:    'On desktop, look for the install icon (⊕) in your browser\'s address bar, or open the browser menu and choose "Install app".',
   },
   es: {
     title:            'Ajustes',
@@ -56,6 +72,22 @@ const SETTINGS_STRINGS = {
     toastStopsCleared:  'Todas las paradas guardadas eliminadas',
     toastCacheCleared:  'Caché vaciada — recarga para aplicar',
     removeStop:       '✕',
+    installLabel:         'App',
+    installTitle:         'Añadir a pantalla de inicio',
+    installDesc:          'Instala la app para acceso rápido',
+    installBtnView:       'Ver',
+    installGuideTitle:    'Añadir a pantalla de inicio',
+    installIosIntro:      'Sigue estos pasos en Safari:',
+    installIosStep1:      'Abre esta página en Safari (no en Chrome)',
+    installIosStep2:      'Pulsa el botón Compartir (□↑) en la parte inferior de la pantalla',
+    installIosStep3:      'Desplázate hacia abajo y pulsa "Añadir a pantalla de inicio"',
+    installIosStep4:      'Pulsa "Añadir" en la esquina superior derecha para confirmar',
+    installIosNote:       'ⓘ Chrome en iOS no puede instalar apps. Debes usar Safari.',
+    installAndroidIntro:  'Sigue estos pasos en Chrome:',
+    installAndroidStep1:  'Pulsa el menú (⋮) en la esquina superior derecha',
+    installAndroidStep2:  'Pulsa "Añadir a pantalla de inicio"',
+    installAndroidStep3:  'Pulsa "Añadir" para confirmar',
+    installOtherIntro:    'En escritorio, busca el icono de instalación (⊕) en la barra de direcciones del navegador, o abre el menú del navegador y elige "Instalar app".',
   },
 };
 
@@ -171,6 +203,13 @@ function applyLang() {
   const dr = getDefaultRegion();
   document.getElementById('default-region-name').textContent = dr ? dr.nombre : ss('regionNone');
 
+  // Install guide
+  document.getElementById('settings-install-label').textContent  = ss('installLabel');
+  document.getElementById('settings-install-title').textContent  = ss('installTitle');
+  document.getElementById('settings-install-desc').textContent   = ss('installDesc');
+  document.getElementById('open-install-guide-btn').textContent  = ss('installBtnView');
+  document.getElementById('install-guide-title').textContent     = ss('installGuideTitle');
+
   // Sync seg buttons
   syncSeg('lang-seg', lang);
   syncSeg('datemode-seg', getCookie('plannerDateMode') || 'today');
@@ -232,6 +271,92 @@ document.getElementById('clear-cache-btn').addEventListener('click', async () =>
     await Promise.all(keys.map(k => caches.delete(k)));
   }
   showToast(ss('toastCacheCleared'));
+});
+
+// ---- Install guide ----
+function detectPlatform() {
+  const ua = navigator.userAgent;
+  if (/iPad|iPhone|iPod/.test(ua) && !/Windows Phone/.test(ua)) return 'ios';
+  if (/Android/.test(ua)) return 'android';
+  return 'other';
+}
+
+function renderInstallGuide() {
+  const body = document.getElementById('install-guide-body');
+  const platform = detectPlatform();
+  body.innerHTML = '';
+
+  if (platform === 'ios') {
+    const steps = [
+      { icon: '🌐', text: ss('installIosStep1') },
+      { icon: '📤', text: ss('installIosStep2') },
+      { icon: '➕', text: ss('installIosStep3') },
+      { icon: '✅', text: ss('installIosStep4') },
+    ];
+
+    const intro = document.createElement('p');
+    intro.className = 'install-guide-intro';
+    intro.textContent = ss('installIosIntro');
+    body.appendChild(intro);
+
+    const list = document.createElement('ul');
+    list.className = 'install-guide-steps';
+    steps.forEach(s => {
+      const li = document.createElement('li');
+      li.className = 'install-guide-step';
+      li.innerHTML = `<span class="install-guide-step-icon">${s.icon}</span><span class="install-guide-step-text">${s.text}</span>`;
+      list.appendChild(li);
+    });
+    body.appendChild(list);
+
+    const note = document.createElement('div');
+    note.className = 'install-guide-note';
+    note.textContent = ss('installIosNote');
+    body.appendChild(note);
+
+  } else if (platform === 'android') {
+    const steps = [
+      { icon: '⋮', text: ss('installAndroidStep1') },
+      { icon: '➕', text: ss('installAndroidStep2') },
+      { icon: '✅', text: ss('installAndroidStep3') },
+    ];
+
+    const intro = document.createElement('p');
+    intro.className = 'install-guide-intro';
+    intro.textContent = ss('installAndroidIntro');
+    body.appendChild(intro);
+
+    const list = document.createElement('ul');
+    list.className = 'install-guide-steps';
+    steps.forEach(s => {
+      const li = document.createElement('li');
+      li.className = 'install-guide-step';
+      li.innerHTML = `<span class="install-guide-step-icon">${s.icon}</span><span class="install-guide-step-text">${s.text}</span>`;
+      list.appendChild(li);
+    });
+    body.appendChild(list);
+
+  } else {
+    const intro = document.createElement('p');
+    intro.className = 'install-guide-intro';
+    intro.textContent = ss('installOtherIntro');
+    body.appendChild(intro);
+  }
+}
+
+function closeInstallGuide() {
+  document.getElementById('install-guide-overlay').classList.add('hidden');
+}
+
+document.getElementById('open-install-guide-btn').addEventListener('click', () => {
+  renderInstallGuide();
+  document.getElementById('install-guide-overlay').classList.remove('hidden');
+});
+
+document.getElementById('install-guide-close').addEventListener('click', closeInstallGuide);
+
+document.getElementById('install-guide-overlay').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeInstallGuide();
 });
 
 // ---- Init ----

@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Settings</title>
-  <link rel="stylesheet" href="src/style.css?v=7" />
+  <link rel="stylesheet" href="src/style.css?v=8" />
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#1a6fdb" />
   <link rel="apple-touch-icon" href="icons/icon-180.png" />
@@ -90,7 +90,30 @@
         </div>
       </div>
 
+      <!-- Install app -->
+      <div class="settings-section">
+        <div class="settings-section-label" id="settings-install-label">App</div>
+        <div class="settings-row settings-row-static">
+          <div class="settings-row-body">
+            <div class="settings-row-title" id="settings-install-title">Add to Home Screen</div>
+            <div class="settings-row-desc" id="settings-install-desc">Install the app for quick access</div>
+          </div>
+          <button class="settings-action-btn" id="open-install-guide-btn">View</button>
+        </div>
+      </div>
+
     </main>
+  </div>
+
+  <!-- Install guide overlay -->
+  <div id="install-guide-overlay" class="install-guide-overlay hidden">
+    <div class="install-guide-card">
+      <div class="install-guide-header">
+        <div class="install-guide-title" id="install-guide-title">Add to Home Screen</div>
+        <button class="install-guide-close" id="install-guide-close">✕</button>
+      </div>
+      <div id="install-guide-body"></div>
+    </div>
   </div>
 
   <!-- Toast -->
