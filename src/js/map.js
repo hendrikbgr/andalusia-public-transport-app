@@ -410,11 +410,10 @@ async function drawRoutePolyline(polyData) {
 }
 
 // ---- Multi-leg journey polylines ----
-// journeyPolys = [{ points: [...], color: '#hex', code: 'M-221' }, ...]
+// journeyPolys = [{ points: [...], color: '#hex', code: 'M-221', lineaId: '22' }, ...]
 let journeyPolylineLayers = [];
 async function drawJourneyPolylines(journeyPolys) {
   if (!leafletMap || !journeyPolys?.length) return;
-  // Remove any previous journey layers
   journeyPolylineLayers.forEach(l => l.remove());
   journeyPolylineLayers = [];
   if (polylineLayer) { polylineLayer.remove(); polylineLayer = null; }
@@ -442,6 +441,24 @@ async function drawJourneyPolylines(journeyPolys) {
     }).addTo(leafletMap);
     journeyPolylineLayers.push(layer);
     allBounds.push(...latLngs);
+  }
+
+  // Filter stop markers to only those on the journey's lines
+  if (currentConsorcio) {
+    try {
+      const lineaIds = journeyPolys.map(p => p.lineaId).filter(Boolean);
+      const routeStopIds = new Set();
+      await Promise.all(lineaIds.map(async id => {
+        const data = await fetchJSON(`${API}/${currentConsorcio.idConsorcio}/lineas/${id}/paradas`);
+        (data.paradas || []).forEach(p => routeStopIds.add(String(p.idParada)));
+      }));
+      if (routeStopIds.size) {
+        await showMap(currentConsorcio, null, routeStopIds);
+        showingAllStops = false;
+        allStopsToggleLabel.textContent = ms('showAllStops');
+        allStopsToggle.classList.remove('hidden');
+      }
+    } catch { /* fall through with all stops */ }
   }
 
   if (allBounds.length) {

@@ -40,7 +40,6 @@ const STRINGS = {
     oonLineLabel:    'Line',
     oonRouteName:    'Route',
     oonHint:         from => `This line does not directly serve ${from}. You will need to reach a stop on this route first.`,
-    viewTimetable:   '🗓️ View timetable',
   },
   es: {
     journeyTitle:    'Planificador de Viaje',
@@ -76,7 +75,6 @@ const STRINGS = {
     oonLineLabel:    'Línea',
     oonRouteName:    'Recorrido',
     oonHint:         from => `Esta línea no sirve directamente ${from}. Tendrá que llegar a una parada en esta ruta primero.`,
-    viewTimetable:   '🗓️ Ver horarios',
   },
 };
 
@@ -814,7 +812,8 @@ async function prepareMapButton(itin) {
       try {
         const data = await fetchJSON(`${API}/${cid}/lineas/${trip.idlinea}`);
         const poly = data.polilinea || [];
-        return poly.length ? { points: poly, color, code: trip.codigo || '' } : null;
+        const lineColor = data.color ? `#${data.color}` : color;
+        return poly.length ? { points: poly, color: lineColor, code: trip.codigo || '', lineaId: String(trip.idlinea) } : null;
       } catch { return null; }
     }));
     const journeyPolys = polyResults.filter(Boolean);
@@ -843,66 +842,130 @@ async function prepareMapButton(itin) {
 }
 
 // ---- Out-of-network detail sheet ----
+
+// Extract all nucleo candidates from a line name by splitting on '-'.
+// Returns array of matching nucleo objects (excluding the origin).
+// Prefers exact name matches over partial matches.
+function boardNucleoCandidates(lineName) {
+  const parts = lineName.split('-').map(p => p.trim());
+  const results = [];
+  for (const part of parts) {
+    const normPart = normalize(part);
+    // Exact match first
+    let match = allNucleos.find(n => normalize(n.nombre) === normPart);
+    // Then: nucleo name fully contained in part (e.g. part="Las Lagunas" matches nucleo "Las Lagunas")
+    if (!match) match = allNucleos.find(n => normPart === normalize(n.nombre));
+    // Then: part fully contained in nucleo name — skip (too loose, causes wrong matches)
+    if (match && String(match.idNucleo) !== String(selectedFrom?.idNucleo)) {
+      results.push(match);
+    }
+  }
+  return results;
+}
+
 function openOutOfNetworkSheet(line) {
-  const cid = currentConsorcio.idConsorcio;
-  const timetableUrl = `linetimetable.html?c=${cid}&l=${line.idLinea}`;
-  const mapUrl = `map.html?c=${cid}`;
-
-  let html = '';
-  // Line code + route name as a header step
-  html += `
-    <div class="journey-step">
-      <div class="journey-step-icon" style="font-size:0.8rem;font-weight:700;">${escHtml(line.codigo || '')}</div>
-      <div class="journey-step-body">
-        <div class="journey-step-action">${s('oonLineLabel')}</div>
-        <div class="journey-step-main">${escHtml(line.nombre || '')}</div>
-        <div class="journey-step-sub">${s('oonHint', selectedFrom?.nombre || '')}</div>
-      </div>
-    </div>`;
-
-  // Timetable link
-  html += `<a href="${escHtml(timetableUrl)}" class="journey-map-btn" style="margin-top:12px">${s('viewTimetable')}</a>`;
-
-  // Map link — try to fetch and show the polyline
-  html += `<button class="journey-map-btn" id="sheet-map-btn" disabled style="margin-top:8px">${s('viewOnMap')}</button>`;
-
+  // Show a loading sheet immediately, then fill in with real times
+  let html = `<div class="journey-loading"><div class="loading-spinner"></div></div>`;
   openSheet(html, null);
 
-  // Async: fetch line polyline and upgrade map button
   (async () => {
+    const cid = currentConsorcio.idConsorcio;
+    const now = getSearchDate();
+    const mapUrl = `map.html?c=${cid}`;
+
+    // 1. Find board nucleus — try each candidate from the line name in order,
+    //    pick the first one that actually has trips from the origin.
+    const candidates = boardNucleoCandidates(line.nombre || '');
+    let boardNucleo = null;
+    let leg1Trips = [];
+
+    // Fetch trips to all candidates in parallel, then pick the first with results
+    const [candidateResults, lineData] = await Promise.all([
+      Promise.all(candidates.map(async nucleo => {
+        try {
+          const d = await fetchJSON(`${API}/${cid}/horarios_origen_destino?idNucleoOrigen=${selectedFrom.idNucleo}&idNucleoDestino=${nucleo.idNucleo}`);
+          const trips = extractTrips(d, now);
+          return { nucleo, trips };
+        } catch { return { nucleo, trips: [] }; }
+      })),
+      fetchJSON(`${API}/${cid}/lineas/${line.idLinea}`).catch(() => null),
+    ]);
+
+    // Pick first candidate with trips
+    for (const { nucleo, trips } of candidateResults) {
+      if (trips.length) { boardNucleo = nucleo; leg1Trips = trips; break; }
+    }
+
+    // 3. Build sheet HTML
+    let newHtml = '';
+    const showCountdown = selectedDateMode === 'today';
+    const realNow = new Date();
+
+    if (boardNucleo && leg1Trips.length) {
+      // Show up to 3 next departures for leg1
+      leg1Trips.slice(0, 3).forEach((trip, i) => {
+        const mins = Math.round((trip.depTime - realNow) / 60000);
+        const minsClass = mins <= 2 ? 'mins-now' : mins <= 15 ? 'mins-soon' : 'mins-later';
+        // Leg1: board from origin to boardNucleo
+        newHtml += stepHtml('', '🚌', s('stepBoard'),
+          `${escHtml(trip.codigo || '')} → ${escHtml(boardNucleo.nombre)}`,
+          escHtml(trip.dias || ''),
+          trip.depStr || '');
+        // Transfer at boardNucleo
+        newHtml += stepHtml('transfer', '⇄', s('stepTransfer'),
+          escHtml(boardNucleo.nombre),
+          trip.arrStr ? `${s('stepArrive')} ${trip.arrStr}` : '',
+          trip.arrStr || '');
+        // Leg2: board out-of-network line toward dest
+        newHtml += stepHtml('', '🚌', s('stepBoard'),
+          `${escHtml(line.codigo || '')} → ${escHtml(selectedTo?.nombre || '')}`,
+          escHtml(line.nombre || ''),
+          '');
+        if (i < Math.min(leg1Trips.length, 3) - 1) {
+          newHtml += `<div style="border-top:2px solid var(--border);margin:8px 0"></div>`;
+        }
+      });
+    } else {
+      // No leg1 found — just show the line info
+      newHtml += stepHtml('', '🚌', s('oonLineLabel'),
+        escHtml(line.nombre || ''),
+        s('oonHint', selectedFrom?.nombre || ''),
+        '');
+    }
+
+    // Map button (loading → link after polyline stored)
+    newHtml += `<button class="journey-map-btn" id="sheet-map-btn" disabled style="margin-top:16px">${s('viewOnMap')}</button>`;
+
+    journeySheetContent.innerHTML = newHtml;
+
+    // 4. Store polyline and upgrade map button
+    const poly = lineData?.polilinea || [];
+    const lineColor = lineData?.color ? `#${lineData.color}` : LEG_COLORS[0];
     const btn = document.getElementById('sheet-map-btn');
-    if (!btn) return;
-    try {
-      const data = await fetchJSON(`${API}/${cid}/lineas/${line.idLinea}`);
-      const poly = data.polilinea || [];
+    if (btn) {
       if (poly.length) {
-        sessionStorage.setItem('journeyPolylines', JSON.stringify([{ points: poly, color: LEG_COLORS[0], code: line.codigo || '' }]));
+        sessionStorage.setItem('journeyPolylines', JSON.stringify([{ points: poly, color: lineColor, code: line.codigo || '', lineaId: String(line.idLinea) }]));
         sessionStorage.removeItem('routePolyline');
         sessionStorage.removeItem('routePolylineCode');
         sessionStorage.removeItem('routeLineaId');
         const link = document.createElement('a');
         link.href = `map.html?c=${cid}&polyline=1`;
         link.className = 'journey-map-btn';
-        link.style.marginTop = '8px';
+        link.style.marginTop = '16px';
         link.textContent = s('viewOnMap');
         btn.replaceWith(link);
       } else {
         const link = document.createElement('a');
         link.href = mapUrl;
         link.className = 'journey-map-btn';
-        link.style.marginTop = '8px';
+        link.style.marginTop = '16px';
         link.textContent = s('viewOnMap');
         btn.replaceWith(link);
       }
-    } catch {
-      const link = document.createElement('a');
-      link.href = mapUrl;
-      link.className = 'journey-map-btn';
-      link.style.marginTop = '8px';
-      link.textContent = s('viewOnMap');
-      btn.replaceWith(link);
     }
-  })();
+  })().catch(() => {
+    journeySheetContent.innerHTML = `<p class="hint">${s('noConn')}</p>`;
+  });
 }
 
 // ---- Navigation ----
