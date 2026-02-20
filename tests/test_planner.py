@@ -3,6 +3,7 @@ UI tests — planner.html (route planner between towns).
 Covers region selection, autocomplete dropdowns, search results, and state restoration.
 """
 
+import pytest
 from playwright.sync_api import expect
 from tests.conftest import BASE_URL, TIMEOUT, MALAGA_ID, NUCLEO_COIN, NUCLEO_ALHAURIN
 
@@ -43,6 +44,7 @@ class TestPlannerUI:
         self._load_malaga(page)
         assert page.locator("#search-btn").get_attribute("disabled") is not None
 
+    @pytest.mark.network
     def test_espartinas_to_sevilla_search(self, page):
         self._load_sevilla(page)
 
@@ -74,6 +76,7 @@ class TestPlannerUI:
         )
         assert page.locator("#results-list .card").count() >= 1
 
+    @pytest.mark.network
     def test_dropdown_attached_to_input(self, page):
         """Dropdown must have no visible gap with its input field."""
         self._load_sevilla(page)

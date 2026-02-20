@@ -7,6 +7,23 @@ import requests
 import pytest
 from playwright.sync_api import sync_playwright
 
+
+def pytest_addoption(parser):
+    parser.addoption(
+        "--run-network",
+        action="store_true",
+        default=False,
+        help="Run tests marked with @pytest.mark.network (skipped by default in CI)",
+    )
+
+
+def pytest_collection_modifyitems(config, items):
+    if not config.getoption("--run-network"):
+        skip = pytest.mark.skip(reason="Skipped in CI — run with --run-network to include")
+        for item in items:
+            if "network" in item.keywords:
+                item.add_marker(skip)
+
 # ── Project root ───────────────────────────────────────────────────────────────
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
