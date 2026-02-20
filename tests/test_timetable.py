@@ -36,18 +36,12 @@ class TestStationUI:
         page.goto(self._url(), timeout=TIMEOUT)
         self._wait_for_content(page)
 
-    def test_countdown_visible_and_decrements(self, page):
+    def test_refresh_button_visible(self, page):
+        """Manual refresh button replaces the old auto-refresh countdown."""
         page.goto(self._url(), timeout=TIMEOUT)
-        expect(page.locator("#countdown")).to_be_visible()
-        # Wait until countdown starts ticking (value drops below 30s, meaning scheduleRefresh fired)
-        page.wait_for_function(
-            "document.getElementById('countdown').textContent.match(/Refresh in (\\d+)s/) && "
-            "parseInt(document.getElementById('countdown').textContent.match(/Refresh in (\\d+)s/)[1]) < 30",
-            timeout=TIMEOUT
-        )
-        first = page.locator("#countdown").text_content(timeout=TIMEOUT)
-        page.wait_for_timeout(2500)
-        assert first != page.locator("#countdown").text_content()
+        expect(page.locator("#refresh-btn")).to_be_visible(timeout=TIMEOUT)
+        # Button should not be spinning on initial load
+        assert "spinning" not in (page.locator("#refresh-btn").get_attribute("class") or "")
 
     def test_live_clock_ticks(self, page):
         page.goto(self._url(), timeout=TIMEOUT)

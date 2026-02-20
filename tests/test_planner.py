@@ -6,6 +6,13 @@ Covers region selection, autocomplete dropdowns, search results, and state resto
 from playwright.sync_api import expect
 from tests.conftest import BASE_URL, TIMEOUT, MALAGA_ID, NUCLEO_COIN, NUCLEO_ALHAURIN
 
+# Sevilla consortium (id=1) is used for dropdown tests because its API is
+# more reliable than Málaga (id=4) which has occasional SQL errors.
+SEVILLA_ID = "1"
+# Núcleo IDs within Sevilla for the search tests
+NUCLEO_SEVILLA_CENTRO = "1"    # Sevilla
+NUCLEO_ESPARTINAS     = "37"   # Espartinas
+
 
 class TestPlannerUI:
     def _load_malaga(self, page):
@@ -13,6 +20,13 @@ class TestPlannerUI:
         page.goto(f"{BASE_URL}/planner.html", timeout=TIMEOUT)
         expect(page.locator("#planner-region-list .card").first).to_be_visible(timeout=TIMEOUT)
         page.locator("#planner-region-list .card").filter(has_text="Málaga").click()
+        expect(page.locator("#from-input")).to_be_visible(timeout=TIMEOUT)
+
+    def _load_sevilla(self, page):
+        """Open planner and select the Área de Sevilla region."""
+        page.goto(f"{BASE_URL}/planner.html", timeout=TIMEOUT)
+        expect(page.locator("#planner-region-list .card").first).to_be_visible(timeout=TIMEOUT)
+        page.locator("#planner-region-list .card").filter(has_text="Sevilla").click()
         expect(page.locator("#from-input")).to_be_visible(timeout=TIMEOUT)
 
     def test_nine_regions_shown(self, page):
@@ -29,18 +43,16 @@ class TestPlannerUI:
         self._load_malaga(page)
         assert page.locator("#search-btn").get_attribute("disabled") is not None
 
-    def test_coin_to_alhaurin_search(self, page):
-        self._load_malaga(page)
+    def test_espartinas_to_sevilla_search(self, page):
+        self._load_sevilla(page)
 
-        # From: Coín
-        page.locator("#from-input").fill("Coin")
+        # From: Espartinas
+        page.locator("#from-input").fill("Espartinas")
         expect(page.locator("#from-results .planner-dropdown-item").first).to_be_visible(timeout=TIMEOUT)
-        page.locator("#from-results .planner-dropdown-item").filter(
-            has=page.locator("text=Coín")
-        ).first.click()
+        page.locator("#from-results .planner-dropdown-item").first.click()
 
-        # To: Alhaurín el Grande
-        page.locator("#to-input").fill("Alhaurin el Grande")
+        # To: Sevilla
+        page.locator("#to-input").fill("Sevilla")
         expect(page.locator("#to-results .planner-dropdown-item").first).to_be_visible(timeout=TIMEOUT)
         page.locator("#to-results .planner-dropdown-item").first.click()
 
@@ -64,8 +76,8 @@ class TestPlannerUI:
 
     def test_dropdown_attached_to_input(self, page):
         """Dropdown must have no visible gap with its input field."""
-        self._load_malaga(page)
-        page.locator("#from-input").fill("Mal")
+        self._load_sevilla(page)
+        page.locator("#from-input").fill("Sev")
         expect(page.locator("#from-results .planner-dropdown-item").first).to_be_visible(timeout=TIMEOUT)
 
         input_box = page.locator("#from-input").bounding_box()
