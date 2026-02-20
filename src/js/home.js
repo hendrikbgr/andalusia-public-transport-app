@@ -171,51 +171,59 @@ document.getElementById('pwa-dismiss-btn').addEventListener('click', () => {
 initPWABanner();
 
 // ---- SW Update Banner ----
-// When the service worker has a new version waiting, show a banner
-// so the user can reload immediately instead of waiting for next launch.
+// Detects a waiting service worker and shows a one-tap reload banner.
+// Registers the SW here (instead of an inline script) so we can hook
+// updatefound from the very first registration — critical on iOS Safari
+// where navigator.serviceWorker.ready can resolve before reg.waiting is set.
 function initUpdateBanner() {
   if (!('serviceWorker' in navigator)) return;
 
-  const banner       = document.getElementById('update-banner');
-  const reloadBtn    = document.getElementById('update-reload-btn');
-  const dismissBtn   = document.getElementById('update-dismiss-btn');
-
-  let waitingSW = null;
+  const banner     = document.getElementById('update-banner');
+  const reloadBtn  = document.getElementById('update-reload-btn');
+  const dismissBtn = document.getElementById('update-dismiss-btn');
+  let waitingSW    = null;
 
   function showUpdateBanner(sw) {
     waitingSW = sw;
     banner.classList.remove('hidden');
   }
 
-  navigator.serviceWorker.ready.then(reg => {
-    // Case 1: a new SW is already waiting when page loads
+  function watchReg(reg) {
+    // Already waiting (e.g. page was refreshed while a new SW was queued)
     if (reg.waiting) {
       showUpdateBanner(reg.waiting);
+      return;
     }
 
-    // Case 2: a new SW installs while the page is open
+    // New SW starts installing while page is open
     reg.addEventListener('updatefound', () => {
       const newSW = reg.installing;
       if (!newSW) return;
       newSW.addEventListener('statechange', () => {
+        // 'installed' + existing controller = new version ready, old still running
         if (newSW.state === 'installed' && navigator.serviceWorker.controller) {
           showUpdateBanner(newSW);
         }
       });
     });
+  }
+
+  // Register SW ourselves so we can call watchReg immediately on the
+  // registration object — before ready resolves — catching iOS edge cases.
+  navigator.serviceWorker.register('./sw.js').then(reg => {
+    watchReg(reg);
+    // Force a network check for a new SW on every page load
+    reg.update();
   });
 
-  // Reload button: tell waiting SW to skip waiting, then reload
+  // Reload: tell waiting SW to activate now, then reload on controllerchange
   reloadBtn.addEventListener('click', () => {
     if (waitingSW) waitingSW.postMessage('skipWaiting');
-    // Once the new SW activates it will control the page — reload to use it
     navigator.serviceWorker.addEventListener('controllerchange', () => location.reload());
   });
 
-  // Dismiss button: just hide the banner (update will apply on next relaunch)
-  dismissBtn.addEventListener('click', () => {
-    banner.classList.add('hidden');
-  });
+  // Dismiss: hide banner; update applies silently on next cold launch
+  dismissBtn.addEventListener('click', () => banner.classList.add('hidden'));
 }
 
 initUpdateBanner();
