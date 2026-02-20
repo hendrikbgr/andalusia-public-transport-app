@@ -57,8 +57,8 @@ function applyLang() {
 langToggle.addEventListener('click', () => {
   setLang(getLang() === 'en' ? 'es' : 'en');
   applyLang();
-  // Re-render departures to update "Now / X min" labels
-  if (lastServices) renderDepartures(lastServices, lastNow);
+  // Tick minute labels so "Now / X min" strings update to the new language
+  tickMinuteLabels();
 });
 
 // ---- State ----
@@ -114,8 +114,8 @@ async function loadStopInfo() {
 let sweepToken = null;
 
 async function loadDepartures(silent = false) {
-  // Silent refresh: just re-render from cached data (the sweep already has the full day)
-  // and cancel any old sweep so it restarts fresh
+  // Silent refresh: keep existing cards visible, fetch new data in the background,
+  // then diff-patch the board so nothing flickers for the user.
   if (silent) {
     sweepToken = {};
     const now = new Date();
@@ -126,10 +126,13 @@ async function loadDepartures(silent = false) {
       if (initial.length) {
         lastServices = initial;
         lastNow = now;
-        renderDepartures(initial, now);
+        patchDepartures(initial, now);   // ← diff-patch instead of full re-render
         sweepRestOfDay(initial, cursor, now, token);
+      } else {
+        // Genuinely no more services today — tick minutes one last time then show no-service
+        tickMinuteLabels();
       }
-    } catch { /* silent — ignore errors */ }
+    } catch { /* silent — ignore errors on background refresh */ }
     return;
   }
 
@@ -139,24 +142,19 @@ async function loadDepartures(silent = false) {
 
   const now = new Date();
 
-  if (!silent) {
-    departuresBoard.innerHTML = '<div class="loading-spinner"></div>';
-    noService.classList.add('hidden');
-    scanningIndicator.classList.add('hidden');
-  }
+  departuresBoard.innerHTML = '<div class="loading-spinner"></div>';
+  noService.classList.add('hidden');
+  scanningIndicator.classList.add('hidden');
 
   try {
     // Phase 1: find the first window that has services (fast path)
-    const { services: initial, cursor: nextCursor } = await fetchFirstWindow(now, silent, token);
+    const { services: initial, cursor: nextCursor } = await fetchFirstWindow(now, false, token);
 
     if (token !== sweepToken) return; // superseded
 
     if (!initial.length) {
-      // No services found today at all
-      if (!silent) {
-        departuresBoard.innerHTML = '';
-        noService.classList.remove('hidden');
-      }
+      departuresBoard.innerHTML = '';
+      noService.classList.remove('hidden');
       lastServices = [];
       lastNow = now;
       return;
@@ -171,10 +169,79 @@ async function loadDepartures(silent = false) {
     sweepRestOfDay(initial, nextCursor, now, token);
 
   } catch (e) {
-    if (!silent) {
-      departuresBoard.innerHTML = `<p class="hint">${t('noServiceLoad')}</p>`;
-    }
+    departuresBoard.innerHTML = `<p class="hint">${t('noServiceLoad')}</p>`;
   }
+}
+
+// Walk every visible card and update only its minute label — no fetch, no flicker.
+function tickMinuteLabels() {
+  const now = new Date();
+  const cards = departuresBoard.querySelectorAll('.departure-card[data-key]');
+  cards.forEach(card => {
+    const scheduled = parseServiceTime(card.dataset.servicio, now);
+    const mins = Math.round((scheduled - now) / 60000);
+    const minsEl = card.querySelector('.departure-mins');
+    if (!minsEl) return;
+    minsEl.textContent = formatMins(mins);
+    minsEl.className = `departure-mins ${mins <= 2 ? 'mins-now' : mins <= 10 ? 'mins-soon' : 'mins-later'}`;
+  });
+}
+
+// Diff the new services against the current DOM cards and apply minimal changes.
+// Cards that are identical (same key = idLinea|servicio) stay in place.
+// New cards are inserted; cards no longer in the new list are removed.
+function patchDepartures(services, now) {
+  const enriched = services
+    .map(s => ({ ...s, _scheduled: parseServiceTime(s.servicio, now) }))
+    .filter(s => Math.round((s._scheduled - now) / 60000) >= -1)
+    .sort((a, b) => a._scheduled - b._scheduled);
+
+  if (!enriched.length) {
+    departuresBoard.innerHTML = '';
+    noService.classList.remove('hidden');
+    return;
+  }
+  noService.classList.add('hidden');
+
+  // Index existing cards by key
+  const existingCards = {};
+  departuresBoard.querySelectorAll('.departure-card[data-key]').forEach(el => {
+    existingCards[el.dataset.key] = el;
+  });
+
+  // Remove sentinel if present (sweepRestOfDay adds it; we'll re-add when needed)
+  const oldSentinel = document.getElementById('load-more-sentinel');
+  if (oldSentinel) oldSentinel.remove();
+
+  // Build the desired card order, reusing existing DOM nodes where possible
+  const fragment = document.createDocumentFragment();
+  const newKeys = new Set();
+
+  enriched.forEach(s => {
+    const key = `${s.idLinea}|${s.servicio}`;
+    newKeys.add(key);
+    if (existingCards[key]) {
+      // Card already exists — just tick its minute label
+      const card = existingCards[key];
+      const mins = Math.round((s._scheduled - now) / 60000);
+      const minsEl = card.querySelector('.departure-mins');
+      if (minsEl) {
+        minsEl.textContent = formatMins(mins);
+        minsEl.className = `departure-mins ${mins <= 2 ? 'mins-now' : mins <= 10 ? 'mins-soon' : 'mins-later'}`;
+      }
+      fragment.appendChild(card);
+    } else {
+      // New card — create it
+      fragment.appendChild(makeDepartureCard(s, now));
+    }
+  });
+
+  // Remove cards that are no longer in the new list
+  Object.entries(existingCards).forEach(([key, el]) => {
+    if (!newKeys.has(key)) el.remove();
+  });
+
+  departuresBoard.appendChild(fragment);
 }
 
 // Finds the first non-empty window starting from `now`.
@@ -284,6 +351,8 @@ function makeDepartureCard(s, now) {
   card.className = 'departure-card';
   card.setAttribute('role', 'button');
   card.setAttribute('tabindex', '0');
+  card.dataset.key = `${s.idLinea}|${s.servicio}`;   // for diff-patching
+  card.dataset.servicio = s.servicio;                  // for tickMinuteLabels
   card._mins = mins; // used for insertion sort in sweepRestOfDay
 
   const minsLabel = formatMins(mins);
@@ -352,7 +421,10 @@ function formatMins(mins) {
 // ---- Clock ----
 function startClock() {
   updateClock();
-  setInterval(updateClock, 1000);
+  setInterval(() => {
+    updateClock();
+    tickMinuteLabels(); // keep "X min" labels accurate every second, no fetch needed
+  }, 1000);
 }
 
 function updateClock() {
