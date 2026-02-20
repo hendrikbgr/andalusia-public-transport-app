@@ -363,7 +363,8 @@ async function fetchFirstWindow(now, silent, token) {
   return { services: [], cursor };
 }
 
-// Continues sweeping from `cursor` to end of day, appending new cards live.
+// Continues sweeping from `cursor` to end of day, adding new cards via
+// patchDepartures so sort order is always correct (same path as silentSweep).
 async function sweepRestOfDay(collected, cursor, now, token) {
   const endOfDay = new Date(now);
   endOfDay.setHours(23, 59, 0, 0);
@@ -387,21 +388,24 @@ async function sweepRestOfDay(collected, cursor, now, token) {
     if (token !== sweepToken) return;
 
     if (data.servicios && data.servicios.length > 0) {
-      const newOnes = data.servicios.filter(s => {
+      let changed = false;
+      data.servicios.forEach(s => {
         const key = `${s.idLinea}|${s.servicio}`;
-        if (seen.has(key)) return false;
-        seen.add(key);
-        return true;
+        if (!seen.has(key)) {
+          seen.add(key);
+          collected.push(s);
+          changed = true;
+        }
       });
 
-      if (newOnes.length) {
-        collected.push(...newOnes);
-        lastServices = collected;
-        // Append new cards before the sentinel
-        newOnes
-          .map(s => makeDepartureCard(s, now))
-          .sort((a, b) => a._mins - b._mins)
-          .forEach(card => departuresBoard.insertBefore(card, sentinel));
+      if (changed) {
+        lastServices = [...collected];
+        lastNow = now;
+        // Remove sentinel temporarily so patchDepartures doesn't see it
+        sentinel.remove();
+        patchDepartures(collected, now);
+        // Re-append sentinel after patch
+        departuresBoard.appendChild(sentinel);
       }
     }
 
