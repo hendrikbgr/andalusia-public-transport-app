@@ -114,25 +114,18 @@ async function loadStopInfo() {
 let sweepToken = null;
 
 async function loadDepartures(silent = false) {
-  // Silent refresh: keep existing cards visible, fetch new data in the background,
-  // then diff-patch the board so nothing flickers for the user.
   if (silent) {
-    sweepToken = {};
+    // Step 1: immediately trim cards that have already departed and tick labels.
+    //         The board stays fully visible — zero flicker for the user.
     const now = new Date();
+    pruneAndTick(now);
+
+    // Step 2: re-sweep the full day in the background.
+    //         patchDepartures is called with the growing collected set after
+    //         each window, so cards can only be added, never blanked mid-sweep.
+    sweepToken = {};
     const token = sweepToken;
-    try {
-      const { services: initial, cursor } = await fetchFirstWindow(now, true, token);
-      if (token !== sweepToken) return;
-      if (initial.length) {
-        lastServices = initial;
-        lastNow = now;
-        patchDepartures(initial, now);   // ← diff-patch instead of full re-render
-        sweepRestOfDay(initial, cursor, now, token);
-      } else {
-        // Genuinely no more services today — tick minutes one last time then show no-service
-        tickMinuteLabels();
-      }
-    } catch { /* silent — ignore errors on background refresh */ }
+    silentSweep(now, token);
     return;
   }
 
@@ -187,9 +180,81 @@ function tickMinuteLabels() {
   });
 }
 
+// Remove cards that have already departed and tick remaining labels.
+// Called instantly at the start of every silent refresh — no network needed.
+function pruneAndTick(now) {
+  const cards = departuresBoard.querySelectorAll('.departure-card[data-key]');
+  cards.forEach(card => {
+    const scheduled = parseServiceTime(card.dataset.servicio, now);
+    const mins = Math.round((scheduled - now) / 60000);
+    if (mins < -1) {
+      card.remove();
+      return;
+    }
+    const minsEl = card.querySelector('.departure-mins');
+    if (minsEl) {
+      minsEl.textContent = formatMins(mins);
+      minsEl.className = `departure-mins ${mins <= 2 ? 'mins-now' : mins <= 10 ? 'mins-soon' : 'mins-later'}`;
+    }
+  });
+}
+
+// Full-day sweep that runs silently in the background.
+// After each API window, patchDepartures is called with the growing collected
+// set — so cards are only ever added, never removed mid-sweep.
+async function silentSweep(now, token) {
+  const endOfDay = new Date(now);
+  endOfDay.setHours(23, 59, 0, 0);
+
+  let cursor = new Date(now);
+  const collected = [];
+  const seen = new Set();
+
+  // Remove any leftover "loading more" sentinel from a previous sweep
+  const oldSentinel = document.getElementById('load-more-sentinel');
+  if (oldSentinel) oldSentinel.remove();
+
+  while (cursor <= endOfDay) {
+    if (token !== sweepToken) return;
+
+    let data;
+    try {
+      data = await fetchJSON(
+        `${API}/${CONSORCIO_ID}/paradas/${STOP_ID}/servicios?horaIni=${formatDateForAPI(cursor)}`
+      );
+    } catch {
+      break; // network error — leave board as-is
+    }
+
+    if (token !== sweepToken) return;
+
+    if (data.servicios && data.servicios.length > 0) {
+      let changed = false;
+      data.servicios.forEach(s => {
+        const key = `${s.idLinea}|${s.servicio}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          collected.push(s);
+          changed = true;
+        }
+      });
+      if (changed) {
+        lastServices = [...collected];
+        lastNow = now;
+        patchDepartures(collected, now);
+      }
+    }
+
+    cursor = advanceCursor(cursor, data.horaFin);
+  }
+}
+
 // Diff the new services against the current DOM cards and apply minimal changes.
 // Cards that are identical (same key = idLinea|servicio) stay in place.
-// New cards are inserted; cards no longer in the new list are removed.
+// Cards in the new list that are missing from the DOM are added.
+// Cards in the DOM whose key is NOT in the new list are only removed if their
+// departure time has passed — never removed just because the sweep hasn't
+// reached that window yet.
 function patchDepartures(services, now) {
   const enriched = services
     .map(s => ({ ...s, _scheduled: parseServiceTime(s.servicio, now) }))
@@ -236,9 +301,14 @@ function patchDepartures(services, now) {
     }
   });
 
-  // Remove cards that are no longer in the new list
+  // Only remove a card if it's both absent from the new list AND already departed.
+  // This prevents mid-sweep removal of cards from windows not yet fetched.
   Object.entries(existingCards).forEach(([key, el]) => {
-    if (!newKeys.has(key)) el.remove();
+    if (!newKeys.has(key)) {
+      const scheduled = parseServiceTime(el.dataset.servicio, now);
+      const mins = Math.round((scheduled - now) / 60000);
+      if (mins < -1) el.remove();
+    }
   });
 
   departuresBoard.appendChild(fragment);
