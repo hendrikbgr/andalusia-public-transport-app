@@ -323,6 +323,7 @@ html, body {
   gap: 10px;
 }
 
+
 .departure-card {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -332,10 +333,12 @@ html, body {
   align-items: center;
   gap: 12px;
   box-shadow: var(--shadow-sm);
-  animation: fadeIn 0.25s ease;
+  /* No animation here — only new cards animate via .card-entering */
 }
 
-@keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+/* Only brand-new cards fade+slide in; reused cards reorder silently */
+@keyframes cardEnter { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.departure-card.card-entering { animation: cardEnter 0.22s ease both; }
 
 .departure-line {
   font-size: 0.8rem;

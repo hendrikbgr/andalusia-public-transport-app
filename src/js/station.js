@@ -290,15 +290,15 @@ function patchDepartures(services, now) {
     }
   });
 
-  // Build the desired card order, reusing existing DOM nodes where possible.
-  // replaceChildren() will re-order the board atomically so sorted order is
-  // always respected — no stale cards can sit at the top from a previous render.
-  const fragment = document.createDocumentFragment();
+  // Build the desired ordered list of elements (reusing existing nodes, creating new ones).
+  // We do NOT use replaceChildren/fragment — that detaches every node and causes a repaint
+  // flash on all cards. Instead we surgically move only the nodes that are out of place.
+  const desiredOrder = [];
 
   enriched.forEach(s => {
     const key = `${s.idLinea}|${s.servicio}`;
     if (existingCards[key]) {
-      // Card already exists — just tick its minute label
+      // Card already exists — update its minute label in-place, no DOM move yet
       const card = existingCards[key];
       const mins = Math.round((s._scheduled - now) / 60000);
       const minsEl = card.querySelector('.departure-mins');
@@ -306,21 +306,39 @@ function patchDepartures(services, now) {
         minsEl.textContent = formatMins(mins);
         minsEl.className = `departure-mins ${mins <= 2 ? 'mins-now' : mins <= 10 ? 'mins-soon' : 'mins-later'}`;
       }
-      fragment.appendChild(card);
+      desiredOrder.push(card);
     } else {
-      // New card — create it
-      fragment.appendChild(makeDepartureCard(s, now));
+      // Brand-new card — makeDepartureCard gives it .card-entering for fade-in
+      desiredOrder.push(makeDepartureCard(s, now));
     }
   });
 
-  // Also carry over any surviving future-window cards that aren't in enriched yet,
-  // appended after the sorted block so they don't disrupt chronological order.
+  // Append surviving future-window cards after the sorted block
   Object.entries(existingCards).forEach(([key, el]) => {
-    if (!newKeys.has(key)) fragment.appendChild(el);
+    if (!newKeys.has(key)) desiredOrder.push(el);
   });
 
-  // Atomically replace all board content — guarantees sorted order every time.
-  departuresBoard.replaceChildren(fragment);
+  // Remove cards that have truly departed (not in existingCards any more)
+  departuresBoard.querySelectorAll('.departure-card[data-key]').forEach(el => {
+    if (!existingCards[el.dataset.key]) el.remove();
+  });
+
+  // Now walk desiredOrder and use insertBefore to place each card correctly.
+  // Only cards that are actually out of position get moved — cards already in
+  // the right spot are untouched (no detach → no repaint → no flash).
+  desiredOrder.forEach((card, i) => {
+    const current = departuresBoard.children[i];
+    if (current !== card) {
+      // insertBefore moves the node without detaching-then-reattaching existing
+      // neighbours, so they don't flash.
+      departuresBoard.insertBefore(card, current || null);
+    }
+  });
+
+  // Remove any board children beyond desiredOrder length (shouldn't happen but safety net)
+  while (departuresBoard.children.length > desiredOrder.length) {
+    departuresBoard.lastElementChild.remove();
+  }
 }
 
 // Finds the first non-empty window starting from `now`.
@@ -431,7 +449,7 @@ function makeDepartureCard(s, now) {
   const mins = Math.round((scheduled - now) / 60000);
 
   const card = document.createElement('div');
-  card.className = 'departure-card';
+  card.className = 'departure-card card-entering';
   card.setAttribute('role', 'button');
   card.setAttribute('tabindex', '0');
   card.dataset.key = `${s.idLinea}|${s.servicio}`;   // for diff-patching
