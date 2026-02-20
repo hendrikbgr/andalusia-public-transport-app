@@ -95,7 +95,11 @@ const hasPolyline = mapParams.get('polyline') === '1';
 function tryParsePolyline() {
   try { return JSON.parse(sessionStorage.getItem('routePolyline') || 'null'); } catch { return null; }
 }
+function tryParseJourneyPolylines() {
+  try { return JSON.parse(sessionStorage.getItem('journeyPolylines') || 'null'); } catch { return null; }
+}
 const storedPoly = hasPolyline ? tryParsePolyline() : null;
+const storedJourneyPolys = hasPolyline ? tryParseJourneyPolylines() : null;
 
 if (focusConsorcioId) {
   initMap();
@@ -103,7 +107,10 @@ if (focusConsorcioId) {
   fetchJSON(`${API}/consorcios`)
     .then(data => {
       const c = data.consorcios.find(x => String(x.idConsorcio) === String(focusConsorcioId));
-      if (c) showMap(c, focusStopId).then(() => { if (storedPoly) drawRoutePolyline(storedPoly); });
+      if (c) showMap(c, focusStopId).then(() => {
+        if (storedJourneyPolys) drawJourneyPolylines(storedJourneyPolys);
+        else if (storedPoly) drawRoutePolyline(storedPoly);
+      });
       else loadRegionOverlay();
     })
     .catch(() => loadRegionOverlay());
@@ -112,7 +119,10 @@ if (focusConsorcioId) {
   const defaultRegion = getDefaultRegion();
   if (defaultRegion) {
     initMap();
-    showMap(defaultRegion).then(() => { if (storedPoly) drawRoutePolyline(storedPoly); });
+    showMap(defaultRegion).then(() => {
+      if (storedJourneyPolys) drawJourneyPolylines(storedJourneyPolys);
+      else if (storedPoly) drawRoutePolyline(storedPoly);
+    });
   } else {
     loadRegionOverlay();
   }
@@ -397,6 +407,46 @@ async function drawRoutePolyline(polyData) {
 
   // Fit to polyline bounds (after potential re-render above)
   leafletMap.fitBounds(polylineLayer.getBounds(), { padding: [40, 40] });
+}
+
+// ---- Multi-leg journey polylines ----
+// journeyPolys = [{ points: [...], color: '#hex', code: 'M-221' }, ...]
+let journeyPolylineLayers = [];
+async function drawJourneyPolylines(journeyPolys) {
+  if (!leafletMap || !journeyPolys?.length) return;
+  // Remove any previous journey layers
+  journeyPolylineLayers.forEach(l => l.remove());
+  journeyPolylineLayers = [];
+  if (polylineLayer) { polylineLayer.remove(); polylineLayer = null; }
+
+  const allBounds = [];
+  const label = journeyPolys.map(p => p.code).filter(Boolean).join(' + ');
+  if (label) regionPillName.textContent = label;
+
+  for (const seg of journeyPolys) {
+    const latLngs = (seg.points || []).map(p => {
+      if (Array.isArray(p)) {
+        const parts = String(p[0]).split(',');
+        return [parseFloat(parts[0]), parseFloat(parts[1])];
+      }
+      return [parseFloat(p.latitud ?? p.lat), parseFloat(p.longitud ?? p.lng ?? p.lon)];
+    }).filter(([lat, lng]) => !isNaN(lat) && !isNaN(lng));
+    if (!latLngs.length) continue;
+
+    const layer = L.polyline(latLngs, {
+      color: seg.color || '#1a6fdb',
+      weight: 5,
+      opacity: 0.9,
+      lineJoin: 'round',
+      lineCap: 'round',
+    }).addTo(leafletMap);
+    journeyPolylineLayers.push(layer);
+    allBounds.push(...latLngs);
+  }
+
+  if (allBounds.length) {
+    leafletMap.fitBounds(L.latLngBounds(allBounds), { padding: [40, 40] });
+  }
 }
 
 // ---- All-stops toggle ----

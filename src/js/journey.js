@@ -37,6 +37,10 @@ const STRINGS = {
     stepArrive:      'Arrive',
     stepWait:        mins => `~${mins} min wait`,
     viewOnMap:       '📍 View on map',
+    oonLineLabel:    'Line',
+    oonRouteName:    'Route',
+    oonHint:         from => `This line does not directly serve ${from}. You will need to reach a stop on this route first.`,
+    viewTimetable:   '🗓️ View timetable',
   },
   es: {
     journeyTitle:    'Planificador de Viaje',
@@ -69,6 +73,10 @@ const STRINGS = {
     stepArrive:      'Llegada',
     stepWait:        mins => `~${mins} min espera`,
     viewOnMap:       '📍 Ver en el mapa',
+    oonLineLabel:    'Línea',
+    oonRouteName:    'Recorrido',
+    oonHint:         from => `Esta línea no sirve directamente ${from}. Tendrá que llegar a una parada en esta ruta primero.`,
+    viewTimetable:   '🗓️ Ver horarios',
   },
 };
 
@@ -604,9 +612,9 @@ async function runOutOfNetworkSearch(origin, destName) {
     resultsLinesLabel.textContent = s('linesHeading');
     resultsLinesList.innerHTML = '';
     matchingLines.forEach(line => {
-      const card = document.createElement('a');
+      const card = document.createElement('div');
       card.className = 'card';
-      card.href = `linetimetable.html?c=${currentConsorcio.idConsorcio}&l=${line.idLinea}`;
+      card.style.cursor = 'pointer';
       card.innerHTML = `
         <div class="departure-line" style="flex-shrink:0">${escHtml(line.codigo || line.idLinea)}</div>
         <div class="departure-body">
@@ -614,6 +622,7 @@ async function runOutOfNetworkSearch(origin, destName) {
         </div>
         <span class="departure-info-arrow">›</span>
       `;
+      card.addEventListener('click', () => openOutOfNetworkSheet(line));
       resultsLinesList.appendChild(card);
     });
     resultsLinesHint.classList.remove('hidden');
@@ -708,13 +717,13 @@ function renderItineraries(itineraries, now) {
     }
 
     card.style.cursor = 'pointer';
-    card.addEventListener('click', () => openSheet(buildSheetHtml(itin)));
+    card.addEventListener('click', () => openSheet(buildSheetHtml(itin), itin));
     itineraryList.appendChild(card);
   });
 }
 
 // ---- Detail bottom sheet ----
-function openSheet(html) {
+function openSheet(html, itin) {
   journeySheetContent.innerHTML = html;
   journeySheetBackdrop.classList.remove('hidden');
   journeyDetailSheet.classList.remove('hidden');
@@ -722,6 +731,7 @@ function openSheet(html) {
     journeySheetBackdrop.classList.add('open');
     journeyDetailSheet.classList.add('open');
   });
+  if (itin) prepareMapButton(itin);
 }
 
 function closeSheet() {
@@ -749,8 +759,6 @@ function stepHtml(iconClass, iconEmoji, action, main, sub, time) {
 }
 
 function buildSheetHtml(itin) {
-  const cid = currentConsorcio.idConsorcio;
-  const mapUrl = `map.html?c=${cid}`;
   let html = '';
 
   if (itin.type === 'direct') {
@@ -783,8 +791,118 @@ function buildSheetHtml(itin) {
       leg2.arrStr || '—');
   }
 
-  html += `<a href="${escHtml(mapUrl)}" class="journey-map-btn">${s('viewOnMap')}</a>`;
+  // Map button — starts as loading state; href filled in after polyline fetch
+  html += `<button class="journey-map-btn" id="sheet-map-btn" disabled>${s('viewOnMap')}</button>`;
   return html;
+}
+
+// Leg colors for multi-segment journeys
+const LEG_COLORS = ['#1a6fdb', '#e67e00'];
+
+async function prepareMapButton(itin) {
+  const cid = currentConsorcio.idConsorcio;
+  const btn = document.getElementById('sheet-map-btn');
+  if (!btn) return;
+
+  try {
+    const legs = itin.type === 'direct'
+      ? [{ trip: itin.leg1, color: LEG_COLORS[0] }]
+      : [{ trip: itin.leg1, color: LEG_COLORS[0] }, { trip: itin.leg2, color: LEG_COLORS[1] }];
+
+    const polyResults = await Promise.all(legs.map(async ({ trip, color }) => {
+      if (!trip.idlinea) return null;
+      try {
+        const data = await fetchJSON(`${API}/${cid}/lineas/${trip.idlinea}`);
+        const poly = data.polilinea || [];
+        return poly.length ? { points: poly, color, code: trip.codigo || '' } : null;
+      } catch { return null; }
+    }));
+    const journeyPolys = polyResults.filter(Boolean);
+
+    sessionStorage.setItem('journeyPolylines', JSON.stringify(journeyPolys));
+    sessionStorage.removeItem('routePolyline');
+    sessionStorage.removeItem('routePolylineCode');
+    sessionStorage.removeItem('routeLineaId');
+
+    const mapUrl = `map.html?c=${cid}&polyline=1`;
+    // Replace button with link
+    const link = document.createElement('a');
+    link.href = mapUrl;
+    link.className = 'journey-map-btn';
+    link.textContent = s('viewOnMap');
+    btn.replaceWith(link);
+  } catch {
+    // If fetch fails, still allow navigation to map without polyline
+    const mapUrl = `map.html?c=${cid}`;
+    const link = document.createElement('a');
+    link.href = mapUrl;
+    link.className = 'journey-map-btn';
+    link.textContent = s('viewOnMap');
+    btn.replaceWith(link);
+  }
+}
+
+// ---- Out-of-network detail sheet ----
+function openOutOfNetworkSheet(line) {
+  const cid = currentConsorcio.idConsorcio;
+  const timetableUrl = `linetimetable.html?c=${cid}&l=${line.idLinea}`;
+  const mapUrl = `map.html?c=${cid}`;
+
+  let html = '';
+  // Line code + route name as a header step
+  html += `
+    <div class="journey-step">
+      <div class="journey-step-icon" style="font-size:0.8rem;font-weight:700;">${escHtml(line.codigo || '')}</div>
+      <div class="journey-step-body">
+        <div class="journey-step-action">${s('oonLineLabel')}</div>
+        <div class="journey-step-main">${escHtml(line.nombre || '')}</div>
+        <div class="journey-step-sub">${s('oonHint', selectedFrom?.nombre || '')}</div>
+      </div>
+    </div>`;
+
+  // Timetable link
+  html += `<a href="${escHtml(timetableUrl)}" class="journey-map-btn" style="margin-top:12px">${s('viewTimetable')}</a>`;
+
+  // Map link — try to fetch and show the polyline
+  html += `<button class="journey-map-btn" id="sheet-map-btn" disabled style="margin-top:8px">${s('viewOnMap')}</button>`;
+
+  openSheet(html, null);
+
+  // Async: fetch line polyline and upgrade map button
+  (async () => {
+    const btn = document.getElementById('sheet-map-btn');
+    if (!btn) return;
+    try {
+      const data = await fetchJSON(`${API}/${cid}/lineas/${line.idLinea}`);
+      const poly = data.polilinea || [];
+      if (poly.length) {
+        sessionStorage.setItem('journeyPolylines', JSON.stringify([{ points: poly, color: LEG_COLORS[0], code: line.codigo || '' }]));
+        sessionStorage.removeItem('routePolyline');
+        sessionStorage.removeItem('routePolylineCode');
+        sessionStorage.removeItem('routeLineaId');
+        const link = document.createElement('a');
+        link.href = `map.html?c=${cid}&polyline=1`;
+        link.className = 'journey-map-btn';
+        link.style.marginTop = '8px';
+        link.textContent = s('viewOnMap');
+        btn.replaceWith(link);
+      } else {
+        const link = document.createElement('a');
+        link.href = mapUrl;
+        link.className = 'journey-map-btn';
+        link.style.marginTop = '8px';
+        link.textContent = s('viewOnMap');
+        btn.replaceWith(link);
+      }
+    } catch {
+      const link = document.createElement('a');
+      link.href = mapUrl;
+      link.className = 'journey-map-btn';
+      link.style.marginTop = '8px';
+      link.textContent = s('viewOnMap');
+      btn.replaceWith(link);
+    }
+  })();
 }
 
 // ---- Navigation ----

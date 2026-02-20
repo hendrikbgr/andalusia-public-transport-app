@@ -1470,6 +1470,7 @@ html, body {
   text-decoration: none; transition: background 0.15s;
 }
 .journey-map-btn:active { background: var(--brand); color: #fff; }
+.journey-map-btn:disabled { opacity: 0.5; cursor: default; }
 
 /* ===== Saved Stops (Feature 1) ===== */
 .saved-stops-section { margin-bottom: 24px; }
