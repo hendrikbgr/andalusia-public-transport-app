@@ -863,32 +863,90 @@ function boardNucleoCandidates(lineName) {
   return results;
 }
 
+// Fetch leg2 departure times from a given boarding stop on the out-of-network line.
+// Returns array of { depStr, depTime } sorted ascending, or [] on failure.
+async function fetchLeg2Departures(cid, lineId, boardStopName, now) {
+  try {
+    // Probe all global frequencies in parallel, take first that returns horario data
+    const freqData = await fetchJSON(`${API}/${cid}/frecuencias`);
+    const globalFreqs = freqData.frecuencias || [];
+    const today = now instanceof Date ? now : new Date();
+    const dia = today.getDate();
+    const mes = today.getMonth() + 1;
+
+    const ttResults = await Promise.all(globalFreqs.map(async gf => {
+      try {
+        const d = await fetchJSON(`${API}/${cid}/horarios_lineas?idLinea=${lineId}&idFrecuencia=${gf.idFreq}&dia=${dia}&mes=${mes}`);
+        const planif = (d.planificadores || [])[0];
+        if (!planif) return null;
+        return { planif, freqId: gf.idFreq };
+      } catch { return null; }
+    }));
+
+    // Use the first frequency that returned data
+    const result = ttResults.find(r => r && (r.planif.bloquesIda || []).length > 0);
+    if (!result) return [];
+
+    const bloques = result.planif.bloquesIda || [];
+    const horario = result.planif.horarioIda || [];
+
+    // Find the boarding stop row index by name
+    const normBoard = normalize(boardStopName);
+    const stopIndices = [];
+    bloques.forEach((b, i) => { if (b.tipo !== '1') stopIndices.push(i); });
+    const stopRows = bloques.filter(b => b.tipo !== '1');
+
+    // Find best match: exact, then partial
+    let boardRowIdx = stopRows.findIndex(b => normalize(b.nombre || '') === normBoard);
+    if (boardRowIdx < 0) {
+      boardRowIdx = stopRows.findIndex(b =>
+        normalize(b.nombre || '').includes(normBoard) || normBoard.includes(normalize(b.nombre || ''))
+      );
+    }
+    if (boardRowIdx < 0) boardRowIdx = 0; // fall back to first stop
+
+    const horasIdx = stopIndices[boardRowIdx];
+
+    // Build departure times from that column.
+    // The API already filters by idFrecuencia for today's schedule,
+    // so all returned trips run today — no need to re-filter by frequency.
+    const departures = [];
+    for (const trip of horario) {
+      const timeStr = trip.horas?.[horasIdx];
+      if (!timeStr || timeStr === '--') continue;
+      const [hh, mm] = timeStr.split(':').map(Number);
+      if (isNaN(hh) || isNaN(mm)) continue;
+      const depTime = new Date(today.getFullYear(), today.getMonth(), today.getDate(), hh, mm, 0, 0);
+      departures.push({ depStr: timeStr, depTime });
+    }
+    return departures.sort((a, b) => a.depTime - b.depTime);
+  } catch { return []; }
+}
+
 function openOutOfNetworkSheet(line) {
-  // Show a loading sheet immediately, then fill in with real times
   let html = `<div class="journey-loading"><div class="loading-spinner"></div></div>`;
   openSheet(html, null);
 
   (async () => {
     const cid = currentConsorcio.idConsorcio;
     const now = getSearchDate();
-    const mapUrl = `map.html?c=${cid}`;
 
-    // 1. Find board nucleus — try each candidate from the line name in order,
-    //    pick the first one that actually has trips from the origin.
+    // 1. Find board nucleus candidates from line name
     const candidates = boardNucleoCandidates(line.nombre || '');
     let boardNucleo = null;
     let leg1Trips = [];
 
-    // Fetch trips to all candidates in parallel, then pick the first with results
-    const [candidateResults, lineData] = await Promise.all([
+    // Fetch leg1 trips, leg2 line data, and leg1 polyline all in parallel
+    const [candidateResults, lineData, leg1LineData] = await Promise.all([
       Promise.all(candidates.map(async nucleo => {
         try {
           const d = await fetchJSON(`${API}/${cid}/horarios_origen_destino?idNucleoOrigen=${selectedFrom.idNucleo}&idNucleoDestino=${nucleo.idNucleo}`);
-          const trips = extractTrips(d, now);
-          return { nucleo, trips };
+          return { nucleo, trips: extractTrips(d, now) };
         } catch { return { nucleo, trips: [] }; }
       })),
       fetchJSON(`${API}/${cid}/lineas/${line.idLinea}`).catch(() => null),
+      // Also fetch the leg1 line's polyline — we'll find the idLinea from leg1 trips
+      Promise.resolve(null), // placeholder, resolved below after we know leg1
     ]);
 
     // Pick first candidate with trips
@@ -896,55 +954,84 @@ function openOutOfNetworkSheet(line) {
       if (trips.length) { boardNucleo = nucleo; leg1Trips = trips; break; }
     }
 
-    // 3. Build sheet HTML
-    let newHtml = '';
-    const showCountdown = selectedDateMode === 'today';
+    // 2. Fetch leg2 departures from board stop + leg1 polyline in parallel
+    const boardStopName = boardNucleo?.nombre || '';
+    const leg1IdLinea = leg1Trips[0]?.idlinea;
+    const [leg2Deps, leg1PolyData] = await Promise.all([
+      boardNucleo
+        ? fetchLeg2Departures(cid, line.idLinea, boardStopName, now)
+        : Promise.resolve([]),
+      leg1IdLinea
+        ? fetchJSON(`${API}/${cid}/lineas/${leg1IdLinea}`).catch(() => null)
+        : Promise.resolve(null),
+    ]);
+
+    // 3. Build itinerary pairs: for each leg1 arrival, find next leg2 departure
     const realNow = new Date();
+    let newHtml = '';
 
     if (boardNucleo && leg1Trips.length) {
-      // Show up to 3 next departures for leg1
-      leg1Trips.slice(0, 3).forEach((trip, i) => {
+      const pairs = [];
+      for (const trip of leg1Trips) {
+        const arrAtBoard = trip.arrTime || new Date(trip.depTime.getTime() + 30 * 60000);
+        // Find next leg2 after arrival (with 5min buffer)
+        const earliestLeg2 = new Date(arrAtBoard.getTime() + 5 * 60000);
+        const leg2 = leg2Deps.find(d => d.depTime >= earliestLeg2);
+        pairs.push({ trip, leg2 });
+        if (pairs.length >= 3) break;
+      }
+
+      pairs.forEach(({ trip, leg2 }, i) => {
         const mins = Math.round((trip.depTime - realNow) / 60000);
         const minsClass = mins <= 2 ? 'mins-now' : mins <= 15 ? 'mins-soon' : 'mins-later';
-        // Leg1: board from origin to boardNucleo
+
+        // Leg A→B
         newHtml += stepHtml('', '🚌', s('stepBoard'),
           `${escHtml(trip.codigo || '')} → ${escHtml(boardNucleo.nombre)}`,
           escHtml(trip.dias || ''),
           trip.depStr || '');
-        // Transfer at boardNucleo
+        // Transfer
         newHtml += stepHtml('transfer', '⇄', s('stepTransfer'),
           escHtml(boardNucleo.nombre),
           trip.arrStr ? `${s('stepArrive')} ${trip.arrStr}` : '',
           trip.arrStr || '');
-        // Leg2: board out-of-network line toward dest
+        // Leg B→C with actual departure time
         newHtml += stepHtml('', '🚌', s('stepBoard'),
           `${escHtml(line.codigo || '')} → ${escHtml(selectedTo?.nombre || '')}`,
           escHtml(line.nombre || ''),
-          '');
-        if (i < Math.min(leg1Trips.length, 3) - 1) {
+          leg2 ? leg2.depStr : '');
+        if (i < pairs.length - 1) {
           newHtml += `<div style="border-top:2px solid var(--border);margin:8px 0"></div>`;
         }
       });
     } else {
-      // No leg1 found — just show the line info
       newHtml += stepHtml('', '🚌', s('oonLineLabel'),
         escHtml(line.nombre || ''),
         s('oonHint', selectedFrom?.nombre || ''),
         '');
     }
 
-    // Map button (loading → link after polyline stored)
+    // Map button placeholder
     newHtml += `<button class="journey-map-btn" id="sheet-map-btn" disabled style="margin-top:16px">${s('viewOnMap')}</button>`;
-
     journeySheetContent.innerHTML = newHtml;
 
-    // 4. Store polyline and upgrade map button
-    const poly = lineData?.polilinea || [];
-    const lineColor = lineData?.color ? `#${lineData.color}` : LEG_COLORS[0];
+    // 4. Store BOTH polylines (leg A→B + leg B→C) and upgrade map button
+    const journeyPolys = [];
+    // Leg A→B polyline
+    if (leg1PolyData?.polilinea?.length) {
+      const c = leg1PolyData.color ? `#${leg1PolyData.color}` : LEG_COLORS[0];
+      journeyPolys.push({ points: leg1PolyData.polilinea, color: c, code: leg1Trips[0]?.codigo || '', lineaId: String(leg1IdLinea) });
+    }
+    // Leg B→C polyline
+    if (lineData?.polilinea?.length) {
+      const c = lineData.color ? `#${lineData.color}` : LEG_COLORS[1];
+      journeyPolys.push({ points: lineData.polilinea, color: c, code: line.codigo || '', lineaId: String(line.idLinea) });
+    }
+
     const btn = document.getElementById('sheet-map-btn');
     if (btn) {
-      if (poly.length) {
-        sessionStorage.setItem('journeyPolylines', JSON.stringify([{ points: poly, color: lineColor, code: line.codigo || '', lineaId: String(line.idLinea) }]));
+      if (journeyPolys.length) {
+        sessionStorage.setItem('journeyPolylines', JSON.stringify(journeyPolys));
         sessionStorage.removeItem('routePolyline');
         sessionStorage.removeItem('routePolylineCode');
         sessionStorage.removeItem('routeLineaId');
@@ -956,7 +1043,7 @@ function openOutOfNetworkSheet(line) {
         btn.replaceWith(link);
       } else {
         const link = document.createElement('a');
-        link.href = mapUrl;
+        link.href = `map.html?c=${cid}`;
         link.className = 'journey-map-btn';
         link.style.marginTop = '16px';
         link.textContent = s('viewOnMap');
