@@ -794,8 +794,8 @@ function buildSheetHtml(itin) {
   return html;
 }
 
-// Leg colors for multi-segment journeys
-const LEG_COLORS = ['#1a6fdb', '#e67e00'];
+// Leg colors for multi-segment journeys (A→B green, B→C red)
+const LEG_COLORS = ['#27ae60', '#e7231e'];
 
 async function prepareMapButton(itin) {
   const cid = currentConsorcio.idConsorcio;
@@ -812,8 +812,7 @@ async function prepareMapButton(itin) {
       try {
         const data = await fetchJSON(`${API}/${cid}/lineas/${trip.idlinea}`);
         const poly = data.polilinea || [];
-        const lineColor = data.color ? `#${data.color}` : color;
-        return poly.length ? { points: poly, color: lineColor, code: trip.codigo || '', lineaId: String(trip.idlinea) } : null;
+        return poly.length ? { points: poly, color, code: trip.codigo || '', lineaId: String(trip.idlinea) } : null;
       } catch { return null; }
     }));
     const journeyPolys = polyResults.filter(Boolean);
@@ -1017,15 +1016,13 @@ function openOutOfNetworkSheet(line) {
 
     // 4. Store BOTH polylines (leg A→B + leg B→C) and upgrade map button
     const journeyPolys = [];
-    // Leg A→B polyline
+    // Leg A→B polyline (green)
     if (leg1PolyData?.polilinea?.length) {
-      const c = leg1PolyData.color ? `#${leg1PolyData.color}` : LEG_COLORS[0];
-      journeyPolys.push({ points: leg1PolyData.polilinea, color: c, code: leg1Trips[0]?.codigo || '', lineaId: String(leg1IdLinea) });
+      journeyPolys.push({ points: leg1PolyData.polilinea, color: LEG_COLORS[0], code: leg1Trips[0]?.codigo || '', lineaId: String(leg1IdLinea) });
     }
-    // Leg B→C polyline
+    // Leg B→C polyline (red)
     if (lineData?.polilinea?.length) {
-      const c = lineData.color ? `#${lineData.color}` : LEG_COLORS[1];
-      journeyPolys.push({ points: lineData.polilinea, color: c, code: line.codigo || '', lineaId: String(line.idLinea) });
+      journeyPolys.push({ points: lineData.polilinea, color: LEG_COLORS[1], code: line.codigo || '', lineaId: String(line.idLinea) });
     }
 
     const btn = document.getElementById('sheet-map-btn');
