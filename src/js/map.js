@@ -47,6 +47,7 @@ const regionPillName = document.getElementById('region-pill-name');
 const mapLoading = document.getElementById('map-loading');
 const allStopsToggle = document.getElementById('all-stops-toggle');
 const allStopsToggleLabel = document.getElementById('all-stops-toggle-label');
+const locateBtn = document.getElementById('locate-btn');
 
 // ---- State ----
 let leafletMap = null;
@@ -168,6 +169,8 @@ function initMap() {
 }
 
 // ---- User location dot ----
+let lastUserLatLng = null;
+
 function startLocationWatch() {
   if (!navigator.geolocation) return;
 
@@ -180,6 +183,7 @@ function startLocationWatch() {
   locationWatchId = navigator.geolocation.watchPosition(
     pos => {
       const { latitude: lat, longitude: lng } = pos.coords;
+      lastUserLatLng = [lat, lng];
       if (!userLocationMarker) {
         const icon = L.divIcon({
           className: '',
@@ -194,6 +198,8 @@ function startLocationWatch() {
         }).addTo(leafletMap);
         // Only pan on the very first fix, and only if no stop is already focused
         if (!focusStopId) leafletMap.setView([lat, lng], 13);
+        // Reveal the locate button now that we have a position
+        locateBtn.classList.remove('hidden');
       } else {
         userLocationMarker.setLatLng([lat, lng]);
       }
@@ -207,6 +213,13 @@ function startLocationWatch() {
     { enableHighAccuracy: true, maximumAge: 10000, timeout: 15000 }
   );
 }
+
+// Locate-me button: pan to user's last known position
+locateBtn.addEventListener('click', () => {
+  if (lastUserLatLng) {
+    leafletMap.setView(lastUserLatLng, Math.max(leafletMap.getZoom(), 15), { animate: true });
+  }
+});
 
 function showLocationToast(msg) {
   const toast = document.getElementById('location-toast');
