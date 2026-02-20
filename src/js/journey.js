@@ -115,6 +115,7 @@ let selectedPickedDate = null;
 // Session-level caches (cleared on region change)
 const lineParadasCache  = {};  // idLinea → paradas[]
 const nucleoLineasCache = {};  // idNucleo → lineas[]
+let   allConsorcioLines = null; // all lines in consortium (fetched once)
 
 // ---- Date helpers ----
 function getSearchDate() {
@@ -219,6 +220,7 @@ async function selectRegion(c) {
   // Clear session caches on region change
   Object.keys(lineParadasCache).forEach(k => delete lineParadasCache[k]);
   Object.keys(nucleoLineasCache).forEach(k => delete nucleoLineasCache[k]);
+  allConsorcioLines = null;
   updateSearchBtn();
   showStep(stepForm);
 
@@ -489,73 +491,40 @@ async function findJourneys(origin, dest, now) {
   }
 
   // Phase 2: find 1-transfer itineraries
-  // 2a. Get lines serving the origin nucleus
-  const originLines = await getLineasForNucleo(cid, origin.idNucleo);
-  if (!originLines.length) return [];
-
-  // 2b. Get stop sequences for all origin lines in parallel
-  const allParadas = await Promise.all(
-    originLines.map(line => getLineParadas(cid, line.idLinea).catch(() => []))
+  // Probe all nuclei to find which are reachable from origin AND connect to dest.
+  // The paradas API uses different idNucleo values than the nucleos list, so we
+  // must use horarios_origen_destino directly to discover reachable candidates.
+  const candidates = allNucleos.filter(
+    n => String(n.idNucleo) !== String(origin.idNucleo) &&
+         String(n.idNucleo) !== String(dest.idNucleo)
   );
 
-  // 2c. Collect candidate transfer nuclei: any nucleus reachable from origin
-  //     downstream on any of its lines (different from origin and dest)
-  const candidateSet = new Set();
-  for (let i = 0; i < originLines.length; i++) {
-    const paradas = allParadas[i];
-    // Find the first occurrence of origin nucleus in the stop list
-    const originPos = paradas.findIndex(p => String(p.idNucleo) === String(origin.idNucleo));
-    if (originPos === -1) continue;
-    for (let j = originPos + 1; j < paradas.length; j++) {
-      const nucId = String(paradas[j].idNucleo || '');
-      if (nucId && nucId !== String(origin.idNucleo) && nucId !== String(dest.idNucleo)) {
-        candidateSet.add(nucId);
-      }
-    }
-  }
-
-  if (!candidateSet.size) return [];
-
-  // Cap at 30 to limit parallel API calls
-  const candidateIds = [...candidateSet].slice(0, 30);
-
-  // 2d. For each candidate, check if there is a connection to dest (allDay=true)
-  const leg2Results = await Promise.all(
-    candidateIds.map(async nucId => {
+  // 2a. Probe origin → each candidate AND candidate → dest in parallel
+  const probeResults = await Promise.all(
+    candidates.map(async candidate => {
+      const nucId = String(candidate.idNucleo);
       try {
-        const data = await fetchJSON(
-          `${API}/${cid}/horarios_origen_destino` +
-          `?idNucleoOrigen=${nucId}&idNucleoDestino=${dest.idNucleo}`
-        );
-        const trips = extractTrips(data, now, { allDay: true });
-        return trips.length ? { nucId, trips } : null;
+        const [leg1Data, leg2Data] = await Promise.all([
+          fetchJSON(`${API}/${cid}/horarios_origen_destino?idNucleoOrigen=${origin.idNucleo}&idNucleoDestino=${nucId}`),
+          fetchJSON(`${API}/${cid}/horarios_origen_destino?idNucleoOrigen=${nucId}&idNucleoDestino=${dest.idNucleo}`),
+        ]);
+        const leg1Trips = extractTrips(leg1Data, now);
+        const leg2Trips = extractTrips(leg2Data, now, { allDay: true });
+        if (!leg1Trips.length || !leg2Trips.length) return null;
+        return { candidate, leg1Trips, leg2Trips };
       } catch { return null; }
     })
   );
 
-  const validTransfers = leg2Results.filter(Boolean);
+  const validTransfers = probeResults.filter(Boolean);
   if (!validTransfers.length) return [];
 
-  // 2e. For each valid transfer nucleus, fetch leg1 (origin → transfer)
+  // 2b. Match legs for each valid transfer nucleus
   const itineraries = [];
-  await Promise.all(
-    validTransfers.map(async ({ nucId, trips: leg2Trips }) => {
-      try {
-        const leg1Data = await fetchJSON(
-          `${API}/${cid}/horarios_origen_destino` +
-          `?idNucleoOrigen=${origin.idNucleo}&idNucleoDestino=${nucId}`
-        );
-        const leg1Trips = extractTrips(leg1Data, now);
-        if (!leg1Trips.length) return;
-
-        const transferNucleo = allNucleos.find(n => String(n.idNucleo) === nucId)
-          || { idNucleo: nucId, nombre: `(stop ${nucId})` };
-
-        const pairs = matchLegs(leg1Trips, leg2Trips, transferNucleo);
-        itineraries.push(...pairs);
-      } catch { /* skip this transfer nucleus */ }
-    })
-  );
+  for (const { candidate, leg1Trips, leg2Trips } of validTransfers) {
+    const pairs = matchLegs(leg1Trips, leg2Trips, candidate);
+    itineraries.push(...pairs);
+  }
 
   // Sort by total arrival time (fall back to departure), cap at 5
   itineraries.sort((a, b) => {
@@ -601,21 +570,16 @@ async function runOutOfNetworkSearch(origin, destName) {
   const normDest = normalize(destName);
 
   try {
-    const originLines = await getLineasForNucleo(cid, origin.idNucleo);
-    if (!originLines.length) {
-      showLoading(false);
-      resultsNoService.classList.remove('hidden');
-      return;
+    // Fetch all consortium lines once (cached per region selection)
+    if (!allConsorcioLines) {
+      const data = await fetchJSON(`${API}/${cid}/lineas`);
+      allConsorcioLines = data.lineas || [];
     }
 
-    const matchingLines = [];
-    await Promise.all(originLines.map(async line => {
-      try {
-        const paradas = await getLineParadas(cid, line.idLinea);
-        const hit = paradas.some(p => normalize(p.nombre || '').includes(normDest));
-        if (hit) matchingLines.push(line);
-      } catch { /* skip */ }
-    }));
+    // Find lines whose name contains the destination (e.g. "Fuengirola-Marbella")
+    const matchingLines = allConsorcioLines.filter(
+      l => normalize(l.nombre || '').includes(normDest)
+    );
 
     showLoading(false);
 
