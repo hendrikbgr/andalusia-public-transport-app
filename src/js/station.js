@@ -415,7 +415,10 @@ function renderDepartures(services, now) {
 
 function formatMins(mins) {
   if (mins <= 0) return t('now');
-  return t('min', mins);
+  if (mins < 60) return t('min', mins);
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  return m === 0 ? `${h}h` : `${h}h${m}min`;
 }
 
 // ---- Clock ----
