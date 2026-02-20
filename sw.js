@@ -1,5 +1,5 @@
 // CTAN Bus Tracker — Service Worker (offline shell cache)
-const CACHE = 'ctan-shell-v4';
+const CACHE = 'ctan-shell-v5';
 const SHELL = [
   './home.html',
   './index.html',
@@ -38,9 +38,29 @@ self.addEventListener('activate', e =>
 );
 
 self.addEventListener('fetch', e => {
+  const url = e.request.url;
+
   // Always go to network for API calls
-  if (e.request.url.includes('api.ctan.es')) return;
-  // Cache-first for shell assets
+  if (url.includes('api.ctan.es')) return;
+
+  // Network-first for HTML pages: ensures the latest page shell is always
+  // fetched when online, so updates are visible immediately after SW activates.
+  // Falls back to cache when offline.
+  if (e.request.destination === 'document' || url.endsWith('.html')) {
+    e.respondWith(
+      fetch(e.request)
+        .then(res => {
+          // Update the cache with the fresh response
+          const clone = res.clone();
+          caches.open(CACHE).then(cache => cache.put(e.request, clone));
+          return res;
+        })
+        .catch(() => caches.match(e.request))
+    );
+    return;
+  }
+
+  // Cache-first for JS/CSS assets (versioned via query strings)
   e.respondWith(
     caches.match(e.request).then(cached => cached || fetch(e.request))
   );
