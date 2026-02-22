@@ -74,31 +74,52 @@ initPage();
 
 async function initPage() {
   try {
-    // First, fetch the line's own frequency list to know which tabs to show.
-    // We do a quick probe fetch using today's date with no specific idFrecuencia
-    // to get the top-level frecuencias from the response.
     const today = new Date();
-    const dia   = String(today.getDate()).padStart(2, '0');
-    const mes   = String(today.getMonth() + 1).padStart(2, '0');
+    const dia   = today.getDate();
+    const mes   = today.getMonth() + 1;
 
-    // Fetch with freq 1 (weekday) as probe to get available frequencies list
-    const probeData = await fetchJSON(
-      `${API}/${CONSORCIO_ID}/horarios_lineas?idLinea=${LINEA_ID}&idFrecuencia=1&dia=${dia}&mes=${mes}`
+    // Fetch global frequency list, then probe all in parallel to find which
+    // have data for this line today (same approach as linetimetable.js)
+    const freqData   = await fetchJSON(`${API}/${CONSORCIO_ID}/frecuencias`);
+    const globalFreqs = freqData.frecuencias || [];
+
+    const probeResults = await Promise.all(
+      globalFreqs.map(async gf => {
+        try {
+          const d = await fetchJSON(
+            `${API}/${CONSORCIO_ID}/horarios_lineas` +
+            `?idLinea=${LINEA_ID}&idFrecuencia=${gf.idFreq}&dia=${dia}&mes=${mes}`
+          );
+          const hasData = (d.planificadores || []).length > 0;
+          const freqsInResp = d.frecuencias || [];
+          return hasData ? { idFreq: gf.idFreq, gf, freqsInResp } : null;
+        } catch { return null; }
+      })
     );
 
-    // The response includes a frecuencias array listing which day-types this line serves
-    availableFreqs = probeData.frecuencias || [];
-
-    if (!availableFreqs.length) {
-      // Try global frecuencias endpoint as fallback
-      const globalFreqs = await fetchJSON(`${API}/${CONSORCIO_ID}/frecuencias`);
-      // Use only the first three common types
-      const all = globalFreqs.frecuencias || [];
-      availableFreqs = all.slice(0, 3).map(f => ({
-        idfrecuencia: f.idFreq,
-        acronimo: f.codigo,
-        nombre: f.nombre,
-      }));
+    // Build deduped freq list from those that returned data, using response
+    // labels when available, falling back to global freq labels
+    const seenIds = new Set();
+    for (const r of probeResults) {
+      if (!r) continue;
+      if (r.freqsInResp.length) {
+        for (const f of r.freqsInResp) {
+          if (!seenIds.has(f.idfrecuencia)) {
+            seenIds.add(f.idfrecuencia);
+            availableFreqs.push(f); // { idfrecuencia, acronimo, nombre }
+          }
+        }
+      } else {
+        // Response had planificadores but no frecuencias list — use global label
+        if (!seenIds.has(r.idFreq)) {
+          seenIds.add(r.idFreq);
+          availableFreqs.push({
+            idfrecuencia: r.idFreq,
+            acronimo: r.gf.codigo,
+            nombre: r.gf.nombre,
+          });
+        }
+      }
     }
 
     if (!availableFreqs.length) {
@@ -106,11 +127,8 @@ async function initPage() {
       return;
     }
 
-    // Default to weekday (LV / freq 1) if available, else first
-    const defaultFreq =
-      availableFreqs.find(f => f.acronimo === 'LV' || f.idfrecuencia === '1') ||
-      availableFreqs[0];
-    activeFreqId = defaultFreq.idfrecuencia;
+    // Default to first available frequency
+    activeFreqId = availableFreqs[0].idfrecuencia;
 
     buildFreqTabs();
 
