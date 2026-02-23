@@ -1,5 +1,5 @@
 // CTAN Bus Tracker — Service Worker (offline shell cache)
-const CACHE = 'ctan-shell-v15';
+const CACHE = 'ctan-shell-v16';
 const SHELL = [
   './home.html',
   './index.html',
