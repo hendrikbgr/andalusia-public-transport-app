@@ -58,26 +58,26 @@
 
 ---
 
-## 2. Home screen (`home.html`)
+## 2. Home screen (`index.html`)
 
 | # | Action | Expected result |
 |---|--------|-----------------|
-| H1 | Open `home.html` | Header shows bus icon + "Bus Tracker" title + lang toggle "ES" |
+| H1 | Open `index.html` | Header shows bus icon + "Bus Tracker" title + lang toggle "ES" |
 | H2 | Greeting | Shows "Good morning / afternoon / evening" depending on time of day |
 | H3 | Three cards visible | "Live Departures 🚏", "Route Planner 🗺️", "Stop Map 📍" |
 | H4 | Tap "ES" toggle | Title changes to "Rastreador de Autobús", greeting in Spanish, cards relabelled |
 | H5 | Tap "EN" toggle | Reverts to English |
-| H6 | Tap "Live Departures" | Navigates to `index.html` |
+| H6 | Tap "Live Departures" | Navigates to `stops.html` |
 | H7 | Tap "Route Planner" | Navigates to `planner.html` |
 | H8 | Tap "Stop Map" | Navigates to `map.html` |
 
 ---
 
-## 3. Stop selector (`index.html`)
+## 3. Stop selector (`stops.html`)
 
 | # | Action | Expected result |
 |---|--------|-----------------|
-| S1 | Open `index.html` | Shows 9 region cards with icons (🌻 Sevilla, ⚓ Cádiz, 🏛️ Granada, ☀️ Málaga…) |
+| S1 | Open `stops.html` | Shows 9 region cards with icons (🌻 Sevilla, ⚓ Cádiz, 🏛️ Granada, ☀️ Málaga…) |
 | S2 | Tap "☀️ Área de Málaga" | Loading spinner, then search input + stop list appears |
 | S3 | Search "muelle" | List filters to stops containing "muelle" (e.g. "Terminal Muelle Heredia") |
 | S4 | Search "MALAGA" (uppercase) | Accent/case-insensitive match — returns Málaga stops |
@@ -101,7 +101,7 @@
 | D8 | Tap departure card | Navigates to `route.html?c=4&l=<lineId>&s=149&from=<encodedStationUrl>` |
 | D9 | Lang toggle | "Now/min" labels update without re-fetching API |
 | D10 | QR button | Opens QR overlay with URL of current page |
-| D11 | Back button | Returns to `index.html` (or `from=` URL if set) |
+| D11 | Back button | Returns to `stops.html` (or `from=` URL if set) |
 | D12 | No upcoming buses | Shows "No service" message with hint text |
 
 ---
@@ -190,7 +190,7 @@
 |---|----------|----------|
 | E1 | API unreachable on region load | "Could not load regions." hint text shown |
 | E2 | Stop has no departures today | "No service" card with hint "Check back later" |
-| E3 | Station URL missing `c` or `s` param | Redirected to `index.html` immediately |
+| E3 | Station URL missing `c` or `s` param | Redirected to `stops.html` immediately |
 | E4 | Map: stop coordinates are 0,0 or null | Stop filtered out, not plotted |
 | E5 | Map: region API fails | "Could not load regions." shown in overlay |
 

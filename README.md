@@ -2,7 +2,7 @@
 
 A progressive web app for real-time bus departures, route planning, journey planning, timetables, and an interactive stop map across the nine public transport consortiums of Andalusia, Spain.
 
-**[🚌 Live demo → hendrikbgr.github.io/andalusia-public-transport-app/home.html](https://hendrikbgr.github.io/andalusia-public-transport-app/home.html)**
+**[🚌 Live demo → hendrikbgr.github.io/andalusia-public-transport-app/index.html](https://hendrikbgr.github.io/andalusia-public-transport-app/index.html)**
 
 Built with vanilla JavaScript, Leaflet.js, and the public [CTAN API](https://api.ctan.es).
 
@@ -24,7 +24,7 @@ Built with vanilla JavaScript, Leaflet.js, and the public [CTAN API](https://api
 
 | Page | Description |
 |------|-------------|
-| **Home** (`home.html`) | Dashboard with quick access to all features; shows saved stops for one-tap access |
+| **Home** (`index.html`) | Dashboard with quick access to all features; shows saved stops for one-tap access |
 | **Live Departures** (`station.html`) | Real-time bus board, auto-refreshes every 30 s without flicker; save stops, share via QR code, show stop on map |
 | **Route Detail** (`route.html`) | All stops on a line with direction tabs; service disruption alerts; links to full timetable and polyline map |
 | **Route Planner** (`planner.html`) | Find direct buses between two towns; Today / Tomorrow / Pick date selector; full day timetable below results |
@@ -48,8 +48,8 @@ Built with vanilla JavaScript, Leaflet.js, and the public [CTAN API](https://api
 ## Project structure
 
 ```
-├── home.html              # Home dashboard
-├── index.html             # Stop selector (region → stop)
+├── index.html              # Home dashboard
+├── stops.html             # Stop selector (region → stop)
 ├── station.html           # Live departures board
 ├── route.html             # Route stops detail
 ├── planner.html           # Route planner (direct, town-to-town)
@@ -105,7 +105,7 @@ No build step, no bundler, no framework — just open the HTML files:
 
 ```bash
 python3 -m http.server 8787
-# then open http://localhost:8787/home.html
+# then open http://localhost:8787/index.html
 ```
 
 ---
@@ -139,7 +139,7 @@ Tests use **pytest** + **Playwright** (headless Chromium).
 
 Version bumping is fully automated — never update version numbers manually:
 
-- The **app version badge** (`vN` in `home.html`) and **SW cache name** (`ctan-shell-vN` in `sw.js`) are bumped automatically by the `bump-version.yml` workflow on every push to `main`
+- The **app version badge** (`vN` in `index.html`) and **SW cache name** (`ctan-shell-vN` in `sw.js`) are bumped automatically by the `bump-version.yml` workflow on every push to `main`
 - The **per-file `?v=N` cache-busting query strings** on `<script>` and `<link>` tags are also bumped automatically for any JS or CSS file changed in the same commit
 
 ---

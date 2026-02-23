@@ -8,7 +8,7 @@ A vanilla JS PWA for real-time bus tracking across Andalusia, Spain. No build st
 ## Versioning — fully automated, never do it manually
 
 ### App version badge + SW cache name
-- Displayed in `home.html` as `<div class="home-version" id="home-version">vN</div>`
+- Displayed in `index.html` as `<div class="home-version" id="home-version">vN</div>`
 - Mirrored in `sw.js` as `const CACHE = 'ctan-shell-vN'`
 - **Auto-bumped by `bump-version.yml`** on every push to `main`
 - Never touch these manually
@@ -44,7 +44,7 @@ tests/              — Python + Playwright tests
 ## Each page loads
 1. `src/js/i18n.js?v=N` — shared: getLang, t(), getCookie, setCookie, getDefaultRegion
 2. Its own `src/js/<page>.js?v=N`
-3. `sw.js` registration (inline script, except home.html which does it in home.js)
+3. `sw.js` registration (inline script, except index.html which does it in home.js)
 
 ---
 

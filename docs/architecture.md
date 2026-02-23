@@ -11,8 +11,8 @@ The app is a **multi-page vanilla JavaScript application** — no framework, no 
 | File | Responsibility |
 |------|----------------|
 | `src/js/i18n.js` | Shared across all pages. Translations (EN/ES), cookie helpers for language and default region. Loaded first on every page. |
-| `src/js/app.js` | `index.html` — two-step stop selector: choose region → search stop → navigate to station |
-| `src/js/home.js` | `home.html` — greeting and feature card labels only |
+| `src/js/app.js` | `stops.html` — two-step stop selector: choose region → search stop → navigate to station |
+| `src/js/home.js` | `index.html` — greeting and feature card labels only |
 | `src/js/station.js` | `station.html` — live departures with 30 s silent auto-refresh, QR code |
 | `src/js/route.js` | `route.html` — full stop list for a line, direction tabs, highlight current stop |
 | `src/js/planner.js` | `planner.html` — town-to-town route planner, autocomplete dropdowns, timetable parsing |
@@ -26,8 +26,8 @@ The app is a **multi-page vanilla JavaScript application** — no framework, no 
 All navigation uses explicit URL parameters rather than `history.back()`. Every page that can navigate forward encodes its own URL as a `from=` parameter so the destination page can set its back button's `href` directly.
 
 ```
-home.html
-  └─ index.html                    (stop selector)
+index.html
+  └─ stops.html                    (stop selector)
        └─ station.html?c=4&s=149
             └─ route.html?...&from=<encodedStationUrl>
                  └─ station.html?...&from=<encodedRouteUrl>

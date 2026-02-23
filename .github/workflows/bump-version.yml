@@ -9,7 +9,7 @@ permissions:
 
 jobs:
   bump:
-    name: Bump version in home.html and sw.js
+    name: Bump version in index.html and sw.js
     runs-on: ubuntu-latest
     # Skip if this push was itself the version bump commit (avoid infinite loop)
     if: "!startsWith(github.event.head_commit.message, 'chore: bump version')"
@@ -23,7 +23,7 @@ jobs:
       - name: Read current version and increment
         id: version
         run: |
-          CURRENT=$(grep -oP '(?<=home-version">v)\d+' home.html)
+          CURRENT=$(grep -oP '(?<=home-version">v)\d+' index.html)
           NEW=$((CURRENT + 1))
           echo "old=v${CURRENT}" >> "$GITHUB_OUTPUT"
           echo "new=v${NEW}"     >> "$GITHUB_OUTPUT"
@@ -33,8 +33,8 @@ jobs:
           OLD="${{ steps.version.outputs.old }}"
           NEW="${{ steps.version.outputs.new }}"
 
-          # 1. Bump display badge in home.html
-          sed -i "s|home-version\">${OLD}<|home-version\">${NEW}<|" home.html
+          # 1. Bump display badge in index.html
+          sed -i "s|home-version\">${OLD}<|home-version\">${NEW}<|" index.html
 
           # 2. Bump service worker cache name  e.g. ctan-shell-v11 → ctan-shell-v12
           sed -i "s|ctan-shell-${OLD}|ctan-shell-${NEW}|" sw.js

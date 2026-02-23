@@ -55,7 +55,7 @@ def start_server():
     t.start()
     for _ in range(20):
         try:
-            requests.get(f"{BASE_URL}/home.html", timeout=1)
+            requests.get(f"{BASE_URL}/index.html", timeout=1)
             return
         except Exception:
             time.sleep(0.3)

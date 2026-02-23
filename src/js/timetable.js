@@ -5,9 +5,9 @@ const params      = new URLSearchParams(location.search);
 const CONSORCIO_ID = params.get('c');
 const LINEA_ID     = params.get('l');
 const LINEA_CODE   = params.get('code') || '';
-const BACK_URL     = params.get('from') || 'index.html';
+const BACK_URL     = params.get('from') || 'stops.html';
 
-if (!CONSORCIO_ID || !LINEA_ID) location.href = 'index.html';
+if (!CONSORCIO_ID || !LINEA_ID) location.href = 'stops.html';
 
 // ---- Elements ----
 const backBtn         = document.getElementById('back-btn');

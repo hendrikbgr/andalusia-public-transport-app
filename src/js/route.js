@@ -6,13 +6,13 @@ const params = new URLSearchParams(location.search);
 const CONSORCIO_ID = params.get('c');
 const LINEA_ID = params.get('l');
 const CURRENT_STOP_ID = params.get('s');
-const BACK_URL = params.get('from') || 'index.html';
+const BACK_URL = params.get('from') || 'stops.html';
 const LINEA_CODE = params.get('code') || '';
 const LINEA_DEST = params.get('dest') || '';
 const SENTIDO = params.get('sentido') || '1'; // preferred direction
 
 if (!CONSORCIO_ID || !LINEA_ID) {
-  location.href = 'index.html';
+  location.href = 'stops.html';
 }
 
 // ---- Elements ----

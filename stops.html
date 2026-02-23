@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CTAN Bus Tracker</title>
+  <link rel="stylesheet" href="src/style.css?v=13" />
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#1a6fdb" />
+  <link rel="apple-touch-icon" href="icons/icon-180.png" />
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="icons/icon-16.png" />
+</head>
+<body>
+  <div id="app">
+    <header class="app-header">
+      <div class="header-inner">
+        <a href="index.html" class="back-link" title="Home">←</a>
+        <h1 id="app-title">Bus Tracker</h1>
+        <button class="lang-toggle" id="lang-toggle" title="Switch language">EN</button>
+      </div>
+    </header>
+
+    <main class="main-content">
+      <!-- Saved stops (shown when any stops are saved) -->
+      <div id="saved-stops-section" class="saved-stops-section hidden">
+        <div class="step-label" id="saved-stops-heading">Saved Stops</div>
+        <div id="saved-stops-list" class="card-list"></div>
+      </div>
+
+      <!-- Step 1: Select consortium -->
+      <section id="step-consortium" class="step active">
+        <div class="step-label" id="label-choose-region">Choose your region</div>
+        <div id="consortium-list" class="card-list">
+          <div class="loading-spinner"></div>
+        </div>
+      </section>
+
+      <!-- Step 2: Search stop -->
+      <section id="step-stop" class="step hidden">
+        <button class="back-btn" id="back-to-consortium">← Back</button>
+        <div class="step-label" id="consortium-title">Search stops</div>
+        <div class="search-box">
+          <input
+            type="search"
+            id="stop-search"
+            placeholder="Search by stop name or town…"
+            autocomplete="off"
+            autocorrect="off"
+            spellcheck="false"
+          />
+        </div>
+        <div id="stop-list" class="card-list">
+          <p class="hint" id="stop-list-hint">Start typing to find your stop</p>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="src/js/i18n.js?v=2"></script>
+  <script src="src/js/app.js?v=2"></script>
+  <script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js');</script>
+</body>
+</html>

@@ -1,5 +1,5 @@
 """
-UI tests — stop selector (index.html) and navigation / back-button chain.
+UI tests — stop selector (stops.html) and navigation / back-button chain.
 """
 
 import urllib.parse
@@ -9,18 +9,18 @@ from tests.conftest import BASE_URL, TIMEOUT, MALAGA_ID, STOP_MUELLE
 
 class TestStopSelector:
     def test_regions_load(self, page):
-        page.goto(f"{BASE_URL}/index.html", timeout=TIMEOUT)
+        page.goto(f"{BASE_URL}/stops.html", timeout=TIMEOUT)
         expect(page.locator(".consortium-card").first).to_be_visible(timeout=TIMEOUT)
         assert page.locator(".consortium-card").count() == 9
 
     def test_select_malaga_shows_search(self, page):
-        page.goto(f"{BASE_URL}/index.html", timeout=TIMEOUT)
+        page.goto(f"{BASE_URL}/stops.html", timeout=TIMEOUT)
         expect(page.locator(".consortium-card").first).to_be_visible(timeout=TIMEOUT)
         page.locator(".consortium-card").filter(has_text="Málaga").click()
         expect(page.locator("#stop-search")).to_be_visible(timeout=TIMEOUT)
 
     def _load_malaga_stops(self, page):
-        page.goto(f"{BASE_URL}/index.html", timeout=TIMEOUT)
+        page.goto(f"{BASE_URL}/stops.html", timeout=TIMEOUT)
         expect(page.locator(".consortium-card").first).to_be_visible(timeout=TIMEOUT)
         page.locator(".consortium-card").filter(has_text="Málaga").click()
         expect(page.locator("#step-stop")).not_to_have_class("hidden", timeout=20_000)
@@ -52,7 +52,7 @@ class TestBackButtonChain:
         url = f"{BASE_URL}/station.html?c={MALAGA_ID}&s={STOP_MUELLE}"
         page.goto(url, timeout=TIMEOUT)
         href = page.locator("#back-btn").get_attribute("href")
-        assert href == "index.html"
+        assert href == "stops.html"
 
     def test_station_back_uses_from_param(self, page):
         url = f"{BASE_URL}/station.html?c={MALAGA_ID}&s={STOP_MUELLE}&from=map.html"
@@ -61,7 +61,7 @@ class TestBackButtonChain:
 
     def test_station_missing_params_redirects(self, page):
         page.goto(f"{BASE_URL}/station.html", timeout=TIMEOUT)
-        page.wait_for_url("**/index.html", timeout=TIMEOUT)
+        page.wait_for_url("**/stops.html", timeout=TIMEOUT)
 
     def test_route_back_uses_from_param(self, page):
         from_url = f"{BASE_URL}/station.html?c=4&s=149"

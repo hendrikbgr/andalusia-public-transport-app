@@ -14,7 +14,7 @@ This plan covers the implementation of nine features ranked by user value. They 
 
 **Rank:** 1 · **Complexity:** Medium
 
-**Description:** Users can star any stop from the station page. Saved stops appear as a dedicated "Saved Stops" section on the home screen (`index.html`) for one-tap access and can be removed from either page.
+**Description:** Users can star any stop from the station page. Saved stops appear as a dedicated "Saved Stops" section on the home screen (`stops.html`) for one-tap access and can be removed from either page.
 
 ### Files to modify
 
@@ -22,7 +22,7 @@ This plan covers the implementation of nine features ranked by user value. They 
 |------|--------|
 | `station.html` | Add save button |
 | `src/js/station.js` | Save/unsave logic, button render |
-| `index.html` | Add saved stops section |
+| `stops.html` | Add saved stops section |
 | `src/js/index.js` | Render saved stops list |
 | `src/js/i18n.js` | New translation keys |
 | `src/style.css` | New styles |
@@ -37,7 +37,7 @@ This plan covers the implementation of nine features ranked by user value. They 
 </button>
 ```
 
-**`index.html`** — new section inserted inside `<main>`, after the existing `.home-card-grid` (or stop list area), as its own top-level navigation section:
+**`stops.html`** — new section inserted inside `<main>`, after the existing `.home-card-grid` (or stop list area), as its own top-level navigation section:
 
 ```html
 <div id="saved-stops-section" class="saved-stops-section hidden">
@@ -192,7 +192,7 @@ function renderSavedStops() {
   stops.forEach(stop => {
     const card = document.createElement('a');
     card.className = 'saved-stop-card';
-    card.href = `station.html?c=${stop.idConsorcio}&s=${stop.idParada}&from=index.html`;
+    card.href = `station.html?c=${stop.idConsorcio}&s=${stop.idParada}&from=stops.html`;
     card.innerHTML = `
       <div class="saved-stop-card-body">
         <div class="saved-stop-card-name">${escHtml(stop.nombre)}</div>
@@ -258,7 +258,7 @@ None.
 | `sw.js` *(create)* | Service worker, offline shell |
 | `icons/icon-192.png` *(create)* | App icon asset |
 | `icons/icon-512.png` *(create)* | App icon asset |
-| `index.html` | Add banner HTML + manifest link + SW registration |
+| `stops.html` | Add banner HTML + manifest link + SW registration |
 | All other HTML files | Add `<link rel="manifest">` + `<meta name="theme-color">` + SW registration |
 | `src/js/index.js` | Banner logic |
 | `src/style.css` | Banner styles |
@@ -269,7 +269,7 @@ None.
 {
   "name": "CTAN Bus Tracker",
   "short_name": "Bus Tracker",
-  "start_url": "/index.html",
+  "start_url": "/stops.html",
   "display": "standalone",
   "background_color": "#1a6fdb",
   "theme_color": "#1a6fdb",
@@ -285,7 +285,7 @@ None.
 ```js
 const CACHE = 'ctan-shell-v1';
 const SHELL = [
-  '/index.html', '/station.html', '/route.html',
+  '/stops.html', '/station.html', '/route.html',
   '/planner.html', '/map.html', '/timetable.html',
   '/src/style.css', '/src/js/i18n.js', '/src/js/index.js',
   '/src/js/station.js', '/src/js/route.js',
@@ -300,7 +300,7 @@ self.addEventListener('fetch', e => {
 });
 ```
 
-### New HTML — `index.html`
+### New HTML — `stops.html`
 
 Add to `<head>`:
 ```html
@@ -859,9 +859,9 @@ const params      = new URLSearchParams(location.search);
 const CONSORCIO_ID = params.get('c');
 const LINEA_ID     = params.get('l');
 const LINEA_CODE   = params.get('code') || '';
-const BACK_URL     = params.get('from') || 'index.html';
+const BACK_URL     = params.get('from') || 'stops.html';
 
-if (!CONSORCIO_ID || !LINEA_ID) location.href = 'index.html';
+if (!CONSORCIO_ID || !LINEA_ID) location.href = 'stops.html';
 
 const backBtn         = document.getElementById('back-btn');
 const ttTitle         = document.getElementById('tt-title');

@@ -1,7 +1,7 @@
 {
   "name": "CTAN Bus Tracker",
   "short_name": "Bus Tracker",
-  "start_url": "./home.html",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#1a6fdb",
   "theme_color": "#1a6fdb",

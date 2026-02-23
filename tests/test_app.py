@@ -76,7 +76,7 @@ def start_server():
     # Wait until port is accepting connections
     for _ in range(20):
         try:
-            requests.get(f"{BASE_URL}/home.html", timeout=1)
+            requests.get(f"{BASE_URL}/index.html", timeout=1)
             return
         except Exception:
             time.sleep(0.3)
@@ -236,19 +236,19 @@ def page(browser_ctx):
 
 class TestHomeUI:
     def test_title_and_cards_visible(self, page):
-        page.goto(f"{BASE_URL}/home.html", timeout=TIMEOUT)
+        page.goto(f"{BASE_URL}/index.html", timeout=TIMEOUT)
         expect(page.locator("#app-title")).to_be_visible()
         expect(page.locator("#feat-timetable")).to_contain_text("Live Departures")
         expect(page.locator("#feat-planner")).to_contain_text("Route Planner")
         expect(page.locator("#feat-map")).to_contain_text("Stop Map")
 
     def test_greeting_present(self, page):
-        page.goto(f"{BASE_URL}/home.html", timeout=TIMEOUT)
+        page.goto(f"{BASE_URL}/index.html", timeout=TIMEOUT)
         greeting = page.locator("#home-greeting").text_content()
         assert greeting in ("Good morning", "Good afternoon", "Good evening")
 
     def test_language_toggle(self, page):
-        page.goto(f"{BASE_URL}/home.html", timeout=TIMEOUT)
+        page.goto(f"{BASE_URL}/index.html", timeout=TIMEOUT)
         page.locator("#lang-toggle").click()
         expect(page.locator("#app-title")).to_contain_text("Rastreador")
         expect(page.locator("#feat-timetable")).to_contain_text("Salidas")
@@ -257,38 +257,38 @@ class TestHomeUI:
         expect(page.locator("#app-title")).to_contain_text("Bus Tracker")
 
     def test_live_departures_link(self, page):
-        page.goto(f"{BASE_URL}/home.html", timeout=TIMEOUT)
-        page.locator("a[href='index.html']").first.click()
-        page.wait_for_url(f"**/index.html", timeout=TIMEOUT)
+        page.goto(f"{BASE_URL}/index.html", timeout=TIMEOUT)
+        page.locator("a[href='stops.html']").first.click()
+        page.wait_for_url(f"**/stops.html", timeout=TIMEOUT)
 
     def test_stop_map_link(self, page):
-        page.goto(f"{BASE_URL}/home.html", timeout=TIMEOUT)
+        page.goto(f"{BASE_URL}/index.html", timeout=TIMEOUT)
         page.locator("a[href='map.html']").click()
         page.wait_for_url(f"**/map.html", timeout=TIMEOUT)
 
     def test_planner_link(self, page):
-        page.goto(f"{BASE_URL}/home.html", timeout=TIMEOUT)
+        page.goto(f"{BASE_URL}/index.html", timeout=TIMEOUT)
         page.locator("a[href='planner.html']").click()
         page.wait_for_url(f"**/planner.html", timeout=TIMEOUT)
 
 
 class TestStopSelectorUI:
     def test_regions_load(self, page):
-        page.goto(f"{BASE_URL}/index.html", timeout=TIMEOUT)
+        page.goto(f"{BASE_URL}/stops.html", timeout=TIMEOUT)
         # Wait for region cards to appear (API call) — class is "card consortium-card"
         expect(page.locator(".consortium-card").first).to_be_visible(timeout=TIMEOUT)
         count = page.locator(".consortium-card").count()
         assert count == 9, f"Expected 9 region cards, got {count}"
 
     def test_select_malaga_shows_search(self, page):
-        page.goto(f"{BASE_URL}/index.html", timeout=TIMEOUT)
+        page.goto(f"{BASE_URL}/stops.html", timeout=TIMEOUT)
         expect(page.locator(".consortium-card").first).to_be_visible(timeout=TIMEOUT)
         page.locator(".consortium-card").filter(has_text="Málaga").click()
         expect(page.locator("#stop-search")).to_be_visible(timeout=TIMEOUT)
 
     def _select_malaga_and_wait_stops(self, page):
         """Helper: select Málaga and wait until stops are loaded."""
-        page.goto(f"{BASE_URL}/index.html", timeout=TIMEOUT)
+        page.goto(f"{BASE_URL}/stops.html", timeout=TIMEOUT)
         expect(page.locator(".consortium-card").first).to_be_visible(timeout=TIMEOUT)
         page.locator(".consortium-card").filter(has_text="Málaga").click()
         # step-stop becomes visible; wait for the hint paragraph (stops loaded)
@@ -370,7 +370,7 @@ class TestStationUI:
     def test_back_button_href(self, page):
         page.goto(self._station_url(), timeout=TIMEOUT)
         href = page.locator("#back-btn").get_attribute("href")
-        assert href == "index.html"
+        assert href == "stops.html"
 
     def test_back_button_with_from_param(self, page):
         url = f"{BASE_URL}/station.html?c={MALAGA_ID}&s={STOP_MUELLE}&from=map.html"
@@ -380,7 +380,7 @@ class TestStationUI:
 
     def test_missing_params_redirect(self, page):
         page.goto(f"{BASE_URL}/station.html", timeout=TIMEOUT)
-        page.wait_for_url("**/index.html", timeout=TIMEOUT)
+        page.wait_for_url("**/stops.html", timeout=TIMEOUT)
 
     def test_silent_refresh_no_spinner(self, page):
         """Background refresh must not flash a loading spinner."""

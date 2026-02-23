@@ -41,7 +41,7 @@ function renderSavedStops() {
   stops.forEach(stop => {
     const card = document.createElement('a');
     card.className = 'card saved-stop-card';
-    card.href = `station.html?c=${stop.idConsorcio}&s=${stop.idParada}&from=${encodeURIComponent('index.html')}`;
+    card.href = `station.html?c=${stop.idConsorcio}&s=${stop.idParada}&from=${encodeURIComponent('stops.html')}`;
     card.innerHTML = `
       <div class="card-icon">📍</div>
       <div class="saved-stop-card-body">

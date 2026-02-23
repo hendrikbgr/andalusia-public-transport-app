@@ -4,10 +4,10 @@ const API = 'https://api.ctan.es/v1/Consorcios';
 const params = new URLSearchParams(location.search);
 const CONSORCIO_ID = params.get('c');
 const STOP_ID = params.get('s');
-const BACK_URL = params.get('from') || 'index.html';
+const BACK_URL = params.get('from') || 'stops.html';
 
 if (!CONSORCIO_ID || !STOP_ID) {
-  location.href = 'index.html';
+  location.href = 'stops.html';
 }
 
 // ---- Elements ----

@@ -22,7 +22,7 @@ Roughly grouped by area; not ordered by priority.
 - [ ] **Region pill** — small label on each feature card showing the default region (e.g. "Málaga") to make it feel personalised
 - [ ] **PWA install banner** — add `manifest.json` + service worker so the app can be installed to the home screen on iOS/Android and work offline
 
-### Stop Selector (index.html)
+### Stop Selector (stops.html)
 - [ ] **Nearby stops** — add a "Near me" shortcut that uses geolocation to show stops sorted by distance (use the GPS coords already returned by the stops API)
 - [ ] **Stop zone badge** — show the fare zone (A–E) on each stop card so users can quickly identify zone before tapping
 - [ ] **Consortium description** — brief one-line text under the region name in the selector to help users who don't know which consortium covers their area
