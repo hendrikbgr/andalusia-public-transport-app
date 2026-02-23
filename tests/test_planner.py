@@ -89,9 +89,9 @@ class TestPlannerUI:
         assert gap <= 2, f"Gap between input and dropdown is {gap}px"
 
     def test_state_restored_from_url(self, page):
-        """planner.html?c=4&fromN=201&toN=83 should jump straight to results."""
+        """planner.html?c=4&fromN=201&toN=83&date=tomorrow should jump straight to results."""
         url = (f"{BASE_URL}/planner.html"
-               f"?c={MALAGA_ID}&fromN={NUCLEO_COIN}&toN={NUCLEO_ALHAURIN}")
+               f"?c={MALAGA_ID}&fromN={NUCLEO_COIN}&toN={NUCLEO_ALHAURIN}&date=tomorrow")
         page.goto(url, timeout=TIMEOUT)
         page.wait_for_selector(".departure-card, .planner-result-card, #results-list .card",
                                timeout=30_000)
@@ -100,7 +100,7 @@ class TestPlannerUI:
     def test_result_card_navigates_to_route(self, page):
         """Tapping a result card opens the route detail page."""
         url = (f"{BASE_URL}/planner.html"
-               f"?c={MALAGA_ID}&fromN={NUCLEO_COIN}&toN={NUCLEO_ALHAURIN}")
+               f"?c={MALAGA_ID}&fromN={NUCLEO_COIN}&toN={NUCLEO_ALHAURIN}&date=tomorrow")
         page.goto(url, timeout=TIMEOUT)
         page.wait_for_selector("#results-list .card", timeout=30_000)
         page.locator("#results-list .card").first.click()

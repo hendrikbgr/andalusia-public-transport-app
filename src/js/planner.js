@@ -186,8 +186,10 @@ const initParams = new URLSearchParams(location.search);
 const initC = initParams.get('c');
 const initFrom = initParams.get('fromN');
 const initTo = initParams.get('toN');
+const initDate = initParams.get('date'); // optional: 'today' | 'tomorrow'
 
 if (initC && initFrom && initTo) {
+  if (initDate === 'tomorrow' || initDate === 'today') setDateMode(initDate);
   restoreSearch(initC, initFrom, initTo);
 } else {
   loadRegions();
