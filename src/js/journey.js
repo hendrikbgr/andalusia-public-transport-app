@@ -21,6 +21,7 @@ const STRINGS = {
     backForm:        '← Change route',
     placeholder:     'Type a town or stop…',
     outOfNetworkItem: name => `Search lines to "${name}" →`,
+    changeRegion:    'Change region',
     dateToday:       'Today',
     dateTomorrow:    'Tomorrow',
     datePick:        'Pick date',
@@ -56,6 +57,7 @@ const STRINGS = {
     backForm:        '← Cambiar ruta',
     placeholder:     'Escribe una localidad o parada…',
     outOfNetworkItem: name => `Buscar líneas hacia "${name}" →`,
+    changeRegion:    'Cambiar región',
     dateToday:       'Hoy',
     dateTomorrow:    'Mañana',
     datePick:        'Elegir fecha',
@@ -122,6 +124,7 @@ const datePickerInput     = document.getElementById('date-picker-input');
 const journeySheetBackdrop = document.getElementById('journey-sheet-backdrop');
 const journeyDetailSheet   = document.getElementById('journey-detail-sheet');
 const journeySheetContent  = document.getElementById('journey-sheet-content');
+const defaultRegionChip    = document.getElementById('default-region-chip');
 
 // ---- State ----
 let currentConsorcio  = null;
@@ -200,6 +203,24 @@ langToggle.addEventListener('click', () => {
 
 applyLang();
 
+// ---- Default region chip ----
+function renderDefaultRegionChip(consorcio) {
+  const icon = CONSORTIUM_ICONS[consorcio.idConsorcio] || '🚌';
+  defaultRegionChip.innerHTML =
+    `<span class="default-region-chip-icon">${icon}</span>` +
+    `<span class="default-region-chip-name">${escHtml(consorcio.nombre)}</span>` +
+    `<button class="default-region-chip-change">${escHtml(s('changeRegion'))}</button>`;
+  defaultRegionChip.classList.remove('hidden');
+  defaultRegionChip.querySelector('.default-region-chip-change').addEventListener('click', () => {
+    defaultRegionChip.classList.add('hidden');
+    showStep(stepRegion);
+  });
+}
+
+function hideDefaultRegionChip() {
+  defaultRegionChip.classList.add('hidden');
+}
+
 // ---- Init ----
 loadRegions();
 
@@ -223,6 +244,17 @@ async function loadRegions() {
       card.addEventListener('click', () => selectRegion(c));
       journeyRegionList.appendChild(card);
     });
+
+    // Auto-select default region if set — skip the picker entirely
+    const dr = getDefaultRegion();
+    if (dr) {
+      const match = data.consorcios.find(c => String(c.idConsorcio) === String(dr.idConsorcio));
+      if (match) {
+        renderDefaultRegionChip(match);
+        selectRegion(match);
+        return;
+      }
+    }
   } catch {
     journeyRegionList.innerHTML = `<p class="hint">${s('noConn')}</p>`;
   }
@@ -1053,7 +1085,10 @@ function openOutOfNetworkSheet(line) {
 }
 
 // ---- Navigation ----
-backToRegion.addEventListener('click', () => showStep(stepRegion));
+backToRegion.addEventListener('click', () => {
+  hideDefaultRegionChip();
+  showStep(stepRegion);
+});
 backToForm.addEventListener('click',   () => showStep(stepForm));
 
 function showStep(step) {

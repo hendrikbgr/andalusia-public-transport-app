@@ -21,6 +21,7 @@ const LTT_STRINGS = {
     inbound:       'Inbound',
     noData:        'No timetable data available',
     stop:          'Stop',
+    changeRegion:  'Change region',
   },
   es: {
     title:         'Horarios de Líneas',
@@ -36,6 +37,7 @@ const LTT_STRINGS = {
     inbound:       'Vuelta',
     noData:        'No hay datos de horario disponibles',
     stop:          'Parada',
+    changeRegion:  'Cambiar región',
   },
 };
 
@@ -51,6 +53,7 @@ const lttRegionLabel   = document.getElementById('ltt-region-label');
 const lttRegionList    = document.getElementById('ltt-region-list');
 const lttRegionWrapper = document.getElementById('ltt-region-wrapper');
 const lttSearchForm    = document.getElementById('ltt-search-form');
+const defaultRegionChip = document.getElementById('default-region-chip');
 const lttChosenRegion  = document.getElementById('ltt-chosen-region');
 const lttBackRegion    = document.getElementById('ltt-back-region');
 const lttLineInput     = document.getElementById('ltt-line-input');
@@ -94,6 +97,25 @@ langToggle.addEventListener('click', () => {
 
 applyLang();
 
+// ---- Default region chip ----
+function renderDefaultRegionChip(consorcio) {
+  const icon = CONSORTIUM_ICONS[consorcio.idConsorcio] || '🚌';
+  defaultRegionChip.innerHTML =
+    `<span class="default-region-chip-icon">${icon}</span>` +
+    `<span class="default-region-chip-name">${escHtml(consorcio.nombre)}</span>` +
+    `<button class="default-region-chip-change">${escHtml(ls('changeRegion'))}</button>`;
+  defaultRegionChip.classList.remove('hidden');
+  defaultRegionChip.querySelector('.default-region-chip-change').addEventListener('click', () => {
+    defaultRegionChip.classList.add('hidden');
+    lttSearchForm.classList.add('hidden');
+    lttRegionWrapper.classList.remove('hidden');
+  });
+}
+
+function hideDefaultRegionChip() {
+  defaultRegionChip.classList.add('hidden');
+}
+
 // ---- Load regions ----
 async function loadRegions() {
   lttRegionList.innerHTML = '<div class="loading-spinner"></div>';
@@ -114,6 +136,17 @@ async function loadRegions() {
       card.addEventListener('click', () => selectRegion(c));
       lttRegionList.appendChild(card);
     });
+
+    // Auto-select default region if set — skip the picker entirely
+    const dr = getDefaultRegion();
+    if (dr) {
+      const match = data.consorcios.find(c => String(c.idConsorcio) === String(dr.idConsorcio));
+      if (match) {
+        renderDefaultRegionChip(match);
+        selectRegion(match);
+        return;
+      }
+    }
   } catch {
     lttRegionList.innerHTML = `<p class="hint">${ls('noConn')}</p>`;
   }
@@ -141,6 +174,7 @@ async function selectRegion(c) {
 
 // ---- Back to regions ----
 lttBackRegion.addEventListener('click', () => {
+  hideDefaultRegionChip();
   lttSearchForm.classList.add('hidden');
   lttRegionWrapper.classList.remove('hidden');
 });

@@ -44,6 +44,12 @@ const SETTINGS_STRINGS = {
     installAndroidStep2:  'Tap "Add to Home screen"',
     installAndroidStep3:  'Tap "Add" to confirm',
     installOtherIntro:    'On desktop, look for the install icon (⊕) in your browser\'s address bar, or open the browser menu and choose "Install app".',
+    ossLabel:             'Open Source',
+    ossTitle:             'CTAN Bus Tracker',
+    ossDesc:              'Free and open source — built for the community',
+    ossText:              'This app is free, open source, and has no ads or tracking. It was built to make Andalusia\'s public transport more accessible to everyone — locals and visitors alike.',
+    githubTitle:          'View on GitHub',
+    githubDesc:           'Star the repo, report issues, or contribute',
   },
   es: {
     title:            'Ajustes',
@@ -88,6 +94,12 @@ const SETTINGS_STRINGS = {
     installAndroidStep2:  'Pulsa "Añadir a pantalla de inicio"',
     installAndroidStep3:  'Pulsa "Añadir" para confirmar',
     installOtherIntro:    'En escritorio, busca el icono de instalación (⊕) en la barra de direcciones del navegador, o abre el menú del navegador y elige "Instalar app".',
+    ossLabel:             'Código Abierto',
+    ossTitle:             'CTAN Bus Tracker',
+    ossDesc:              'Gratuita y de código abierto — hecha para la comunidad',
+    ossText:              'Esta app es gratuita, de código abierto y no tiene anuncios ni rastreo. Fue creada para hacer el transporte público de Andalucía más accesible para todos — locales y visitantes.',
+    githubTitle:          'Ver en GitHub',
+    githubDesc:           'Dale una estrella, reporta problemas o contribuye',
   },
 };
 
@@ -209,6 +221,14 @@ function applyLang() {
   document.getElementById('settings-install-desc').textContent   = ss('installDesc');
   document.getElementById('open-install-guide-btn').textContent  = ss('installBtnView');
   document.getElementById('install-guide-title').textContent     = ss('installGuideTitle');
+
+  // Open source
+  document.getElementById('settings-oss-label').textContent   = ss('ossLabel');
+  document.getElementById('settings-oss-title').textContent   = ss('ossTitle');
+  document.getElementById('settings-oss-desc').textContent    = ss('ossDesc');
+  document.getElementById('settings-oss-text').textContent    = ss('ossText');
+  document.getElementById('settings-github-title').textContent = ss('githubTitle');
+  document.getElementById('settings-github-desc').textContent  = ss('githubDesc');
 
   // Sync seg buttons
   syncSeg('lang-seg', lang);

@@ -29,6 +29,7 @@ const STRINGS = {
     dateTomorrow: 'Tomorrow',
     datePick: 'Pick date',
     directConnections: mode => mode === 'today' ? 'All departures today:' : mode === 'tomorrow' ? 'All departures tomorrow:' : 'All departures on this date:',
+    changeRegion: 'Change region',
   },
   es: {
     plannerTitle: 'Planificador de Ruta',
@@ -53,6 +54,7 @@ const STRINGS = {
     dateTomorrow: 'Mañana',
     datePick: 'Elegir fecha',
     directConnections: mode => mode === 'today' ? 'Todas las salidas hoy:' : mode === 'tomorrow' ? 'Todas las salidas mañana:' : 'Todas las salidas en esta fecha:',
+    changeRegion: 'Cambiar región',
   },
 };
 
@@ -95,6 +97,7 @@ const datePickerInput = document.getElementById('date-picker-input');
 const directSection      = document.getElementById('direct-section');
 const directSectionLabel = document.getElementById('direct-section-label');
 const directList         = document.getElementById('direct-list');
+const defaultRegionChip  = document.getElementById('default-region-chip');
 
 // ---- State ----
 let currentConsorcio = null;
@@ -195,6 +198,24 @@ if (initC && initFrom && initTo) {
   loadRegions();
 }
 
+// ---- Default region chip ----
+function renderDefaultRegionChip(consorcio) {
+  const icon = CONSORTIUM_ICONS[consorcio.idConsorcio] || '🚌';
+  defaultRegionChip.innerHTML =
+    `<span class="default-region-chip-icon">${icon}</span>` +
+    `<span class="default-region-chip-name">${escHtml(consorcio.nombre)}</span>` +
+    `<button class="default-region-chip-change">${escHtml(s('changeRegion'))}</button>`;
+  defaultRegionChip.classList.remove('hidden');
+  defaultRegionChip.querySelector('.default-region-chip-change').addEventListener('click', () => {
+    defaultRegionChip.classList.add('hidden');
+    showPlannerStep(stepRegion);
+  });
+}
+
+function hideDefaultRegionChip() {
+  defaultRegionChip.classList.add('hidden');
+}
+
 async function restoreSearch(cId, fromId, toId) {
   // Load consortiums to find the right one
   try {
@@ -239,6 +260,17 @@ async function loadRegions() {
       card.addEventListener('click', () => selectRegion(c));
       plannerRegionList.appendChild(card);
     });
+
+    // Auto-select default region if set — skip the picker entirely
+    const dr = getDefaultRegion();
+    if (dr) {
+      const match = data.consorcios.find(c => String(c.idConsorcio) === String(dr.idConsorcio));
+      if (match) {
+        renderDefaultRegionChip(match);
+        selectRegion(match);
+        return;
+      }
+    }
   } catch {
     plannerRegionList.innerHTML = `<p class="hint">${s('noConn')}</p>`;
   }
@@ -638,7 +670,10 @@ function renderDirectConnections(data, now) {
 }
 
 // ---- Navigation ----
-backToRegion.addEventListener('click', () => showPlannerStep(stepRegion));
+backToRegion.addEventListener('click', () => {
+  hideDefaultRegionChip();
+  showPlannerStep(stepRegion);
+});
 backToForm.addEventListener('click', () => showPlannerStep(stepForm));
 
 function showPlannerStep(step) {
