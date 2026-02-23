@@ -227,7 +227,10 @@ function initUpdateBanner() {
   // Reload: tell waiting SW to activate now, then reload on controllerchange
   reloadBtn.addEventListener('click', () => {
     if (waitingSW) waitingSW.postMessage('skipWaiting');
-    navigator.serviceWorker.addEventListener('controllerchange', () => location.reload());
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      sessionStorage.setItem('showUpdateConfetti', '1');
+      location.reload();
+    });
   });
 
   // Dismiss: hide banner; update applies silently on next cold launch
@@ -235,3 +238,54 @@ function initUpdateBanner() {
 }
 
 initUpdateBanner();
+
+// ---- Update confetti ----
+function launchConfetti() {
+  const COUNT   = 120;
+  const COLORS  = ['#1a6fdb','#f0c040','#e05c5c','#4caf7d','#9c6fdb','#f07840'];
+  const canvas  = document.createElement('canvas');
+  canvas.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:9999';
+  document.body.appendChild(canvas);
+
+  const W = canvas.width  = canvas.offsetWidth;
+  const H = canvas.height = canvas.offsetHeight;
+  const ctx = canvas.getContext('2d');
+
+  const pieces = Array.from({ length: COUNT }, () => ({
+    x:  Math.random() * W,
+    y:  Math.random() * -H,
+    w:  6 + Math.random() * 6,
+    h:  10 + Math.random() * 6,
+    r:  Math.random() * Math.PI * 2,
+    dr: (Math.random() - 0.5) * 0.2,
+    dx: (Math.random() - 0.5) * 2,
+    dy: 3 + Math.random() * 4,
+    color: COLORS[Math.floor(Math.random() * COLORS.length)],
+  }));
+
+  let frame;
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    let alive = false;
+    pieces.forEach(p => {
+      if (p.y < H + 20) alive = true;
+      p.x += p.dx; p.y += p.dy; p.r += p.dr;
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.r);
+      ctx.fillStyle = p.color;
+      ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+      ctx.restore();
+    });
+    if (alive) { frame = requestAnimationFrame(draw); }
+    else        { canvas.remove(); }
+  }
+  draw();
+  setTimeout(() => { cancelAnimationFrame(frame); canvas.remove(); }, 4000);
+}
+
+if (sessionStorage.getItem('showUpdateConfetti') === '1') {
+  sessionStorage.removeItem('showUpdateConfetti');
+  // Small delay so the page has painted first
+  setTimeout(launchConfetti, 200);
+}
