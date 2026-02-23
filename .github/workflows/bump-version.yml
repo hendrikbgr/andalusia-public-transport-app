@@ -1,0 +1,54 @@
+name: Bump App Version
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  bump:
+    name: Bump version in home.html and sw.js
+    runs-on: ubuntu-latest
+    # Skip if this push was itself the version bump commit (avoid infinite loop)
+    if: "!startsWith(github.event.head_commit.message, 'chore: bump version')"
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Use a PAT or the default token — needs write access to push back
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 1
+
+      - name: Read current version and increment
+        id: version
+        run: |
+          # Extract current version number from home.html  e.g. "v10" → 10
+          CURRENT=$(grep -oP '(?<=home-version">v)\d+' home.html)
+          NEW=$((CURRENT + 1))
+          echo "old=v${CURRENT}" >> "$GITHUB_OUTPUT"
+          echo "new=v${NEW}" >> "$GITHUB_OUTPUT"
+          echo "num=${NEW}" >> "$GITHUB_OUTPUT"
+
+      - name: Apply version bump
+        run: |
+          OLD="${{ steps.version.outputs.old }}"
+          NEW="${{ steps.version.outputs.new }}"
+          NUM="${{ steps.version.outputs.num }}"
+
+          # Bump display badge in home.html
+          sed -i "s|home-version\">${OLD}<|home-version\">${NEW}<|" home.html
+
+          # Bump service worker cache name  e.g. ctan-shell-v10 → ctan-shell-v11
+          sed -i "s|ctan-shell-${OLD}|ctan-shell-${NEW}|" sw.js
+
+          echo "Bumped ${OLD} → ${NEW}"
+
+      - name: Commit and push
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add home.html sw.js
+          git commit -m "chore: bump version to ${{ steps.version.outputs.new }}"
+          git push
