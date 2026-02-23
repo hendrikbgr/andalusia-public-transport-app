@@ -1,0 +1,31 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:api.ctan.es)",
+      "Bash(curl:*)",
+      "Bash(python3:*)",
+      "Bash(pip3 show:*)",
+      "Bash(.venv/bin/python:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(gh repo view:*)",
+      "Bash(/tmp/take_screenshots.py:*)",
+      "Bash(/Users/hendrik/Development/transport-app/.venv/bin/python3:*)",
+      "Bash(git mv:*)",
+      "Bash(git rm:*)",
+      "Bash(.venv/bin/python3:*)",
+      "Bash(/usr/bin/python3:*)",
+      "Bash(gh run view:*)",
+      "Bash(gh run watch:*)",
+      "Bash(git fetch:*)",
+      "Bash(grep:*)",
+      "Bash(gh run list:*)",
+      "Bash(gh api:*)",
+      "Bash(git config:*)",
+      "Bash(git pull:*)",
+      "Bash(find:*)",
+      "Bash(git rebase:*)"
+    ]
+  }
+}

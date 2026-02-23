@@ -1,0 +1,14 @@
+{
+  "name": "Bus Tracker — Andalusia",
+  "short_name": "Bus Tracker",
+  "description": "Real-time bus tracking for Andalusia, Spain. Live departures, route planner, journey planner and maps.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1a6fdb",
+  "theme_color": "#1a6fdb",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
