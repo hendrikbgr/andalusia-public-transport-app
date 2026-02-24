@@ -211,7 +211,7 @@ export default function TimetablePage() {
               <tbody>
                 {stopIndices.map((origIdx, rowNum) => (
                   <tr key={rowNum}>
-                    <td>{stopRows[rowNum].nombre}</td>
+                    <td className="tt-stop-name">{stopRows[rowNum].nombre}</td>
                     {horario.map((trip, i) => {
                       const time = (trip.horas || [])[origIdx];
                       return <td key={i}>{(time && time !== '--') ? time : ''}</td>;

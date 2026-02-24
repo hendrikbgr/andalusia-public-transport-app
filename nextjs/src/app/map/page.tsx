@@ -162,7 +162,7 @@ function MapPageContent() {
       )}
 
       {/* Map */}
-      <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
+      <div style={{ flex: 1, position: 'relative', overflow: 'hidden', minHeight: '300px' }}>
         {consorcio && (
           <LeafletMap
             consorcio={consorcio}

@@ -143,12 +143,26 @@ export default function LeafletMap({ consorcio, focusStopId, routePolyline, jour
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Load stops when consorcio changes
+  // Load stops when consorcio changes — wait for map to be ready first
   useEffect(() => {
-    if (!consorcio || !mapRef.current) return;
-    import('leaflet').then(L => {
-      loadStops(L, consorcio, focusStopId || null, null, lang);
-    });
+    if (!consorcio) return;
+    let cancelled = false;
+
+    async function waitAndLoad() {
+      // Poll until map is initialized (Leaflet import is async)
+      for (let i = 0; i < 50; i++) {
+        if (cancelled) return;
+        if (mapRef.current) break;
+        await new Promise(r => setTimeout(r, 100));
+      }
+      if (cancelled || !mapRef.current) return;
+      const L = await import('leaflet');
+      if (cancelled) return;
+      loadStops(L, consorcio!, focusStopId || null, null, lang);
+    }
+
+    waitAndLoad();
+    return () => { cancelled = true; };
   }, [consorcio, focusStopId, lang]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Draw route polyline

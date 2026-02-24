@@ -4,12 +4,13 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import AppHeader from '@/components/layout/AppHeader';
 import { useLang } from '@/contexts/LangContext';
-import { HOME_STRINGS } from '@/lib/i18n';
+import { HOME_STRINGS, SHARED_STRINGS } from '@/lib/i18n';
 import { getSavedStops, removeSavedStop, type SavedStop } from '@/lib/savedStops';
 
 export default function HomePage() {
   const { lang } = useLang();
   const s = HOME_STRINGS[lang];
+  const shared = SHARED_STRINGS[lang];
   const [savedStops, setSavedStops] = useState<SavedStop[]>([]);
 
   useEffect(() => {
@@ -23,7 +24,7 @@ export default function HomePage() {
 
   return (
     <>
-      <AppHeader title={s.appTitle} />
+      <AppHeader title={shared.appTitle} />
       <main className="main-content">
         <div className="home-greeting">{s.greeting()}</div>
 
