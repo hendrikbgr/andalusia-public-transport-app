@@ -105,8 +105,11 @@ export default function RoutePage() {
         {/* Disruption banner */}
         {alerts.length > 0 && (
           <div className="disruption-banner" id="disruption-banner">
-            <div className="disruption-banner-title" id="disruption-banner-title">{t.serviceAlerts}</div>
-            <div id="disruption-alerts-list">
+            <div className="disruption-banner-header">
+              <span className="disruption-icon">⚠️</span>
+              <span className="disruption-banner-title" id="disruption-banner-title">{t.serviceAlerts}</span>
+            </div>
+            <div className="disruption-alerts-list" id="disruption-alerts-list">
               {alerts.map((alert, i) => {
                 const title = lang === 'es'
                   ? ((alert as Noticia & { titulo?: string }).titulo || (alert as Noticia & { tituloEng?: string }).tituloEng || '')

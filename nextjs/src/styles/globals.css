@@ -2094,3 +2094,423 @@ html, body {
   font-size: 1.3rem;
   flex-shrink: 0;
 }
+
+/* ===== Next.js migration: missing / renamed class aliases ===== */
+
+/* --- Station page --- */
+
+/* station-meta-row: flex row holding the meta text + clock */
+.station-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+/* station-clock-wrap: holds live badge + clock time */
+.station-clock-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  flex-shrink: 0;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+/* live-label: pulsing "Live" badge */
+.live-label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--green);
+}
+.live-label::before {
+  content: '';
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--green);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+/* station-actions: row of action buttons below status */
+.station-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+
+/* action-btn: generic pill button used for save/map/refresh/qr */
+.action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 20px;
+  padding: 7px 14px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  text-decoration: none;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+  white-space: nowrap;
+}
+.action-btn:hover {
+  border-color: var(--brand);
+  color: var(--brand);
+  background: var(--brand-light);
+}
+
+/* save-stop-btn state: saved */
+.action-btn.save-stop-btn.saved {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: #fff;
+}
+
+/* refresh-icon: the ↻ symbol inside the refresh button */
+.refresh-icon {
+  display: inline-block;
+  font-size: 1rem;
+  line-height: 1;
+}
+.refresh-icon.spinning {
+  animation: spin 0.7s linear infinite;
+}
+
+/* no-service-text: primary text inside the no-service state */
+.no-service-text {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+/* qr-modal: the white card inside .qr-overlay (renamed from .qr-card) */
+.qr-modal {
+  background: var(--surface);
+  border-radius: 20px;
+  padding: 28px 24px;
+  text-align: center;
+  max-width: 320px;
+  width: 100%;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.18);
+}
+
+/* qr-close: text close link inside qr-modal */
+.qr-close {
+  display: block;
+  text-align: right;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  margin-bottom: 12px;
+  padding: 0;
+}
+.qr-close:hover { color: var(--brand); }
+
+/* qr-toggle: the QR button in station-actions (pill style) */
+.qr-toggle { /* inherits .action-btn */ }
+
+/* --- Route page --- */
+
+/* route-meta: line subtitle shown in header (same as station-meta) */
+.route-meta {
+  font-size: 0.75rem;
+  opacity: 0.8;
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: rgba(255,255,255,0.85);
+}
+
+/* route-actions: row containing timetable + map buttons */
+.route-actions {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+
+/* disruption-banner-title: text span inside disruption-banner-header */
+.disruption-banner-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* --- Stops page --- */
+
+/* consortium-title: name of selected consortium above search */
+.consortium-title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 6px;
+}
+
+/* stop-search: the search input on the stops page */
+.stop-search {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 1rem;
+  background: var(--surface);
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.15s;
+}
+.stop-search:focus { border-color: var(--brand); }
+.stop-search::placeholder { color: var(--text-muted); }
+
+/* --- Home page --- */
+
+/* home-features: alias for home-card-grid */
+.home-features {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* --- Timetable / LineTimetable pages --- */
+
+/* tt-meta: subtitle below timetable header */
+.tt-meta {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  margin-bottom: 14px;
+}
+
+/* ltt-chosen-region: shows selected region name in linetimetable */
+.ltt-chosen-region {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 6px;
+}
+
+/* ltt-line-input: the line search input on linetimetable page */
+.ltt-line-input {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 1rem;
+  background: var(--surface);
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.15s;
+}
+.ltt-line-input:focus { border-color: var(--brand); }
+
+/* --- Planner page --- */
+
+/* planner-input: text inputs inside planner form fields */
+.planner-input {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 1rem;
+  background: var(--surface);
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.15s;
+}
+.planner-input:focus { border-color: var(--brand); }
+.planner-input::placeholder { color: var(--text-muted); }
+.planner-input.dropdown-open {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  border-color: var(--brand);
+}
+
+/* planner-input-wrap: wrapper providing relative positioning for dropdown */
+.planner-input-wrap {
+  position: relative;
+}
+
+/* --- Journey page --- */
+
+/* results-lines-label: heading for "also served by" line list */
+.results-lines-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 8px;
+}
+
+/* --- Update banner --- */
+
+/* update-banner-text: message text inside update banner */
+.update-banner-text {
+  flex: 1;
+  min-width: 0;
+}
+
+/* update-reload-btn: "Reload" button inside update banner */
+.update-reload-btn {
+  background: #fff;
+  color: var(--brand);
+  border: none;
+  border-radius: 8px;
+  padding: 7px 14px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: opacity 0.15s;
+}
+.update-reload-btn:hover { opacity: 0.85; }
+
+/* update-dismiss-btn: "✕" button inside update banner */
+.update-dismiss-btn {
+  background: none;
+  border: 1.5px solid rgba(255,255,255,0.45);
+  border-radius: 8px;
+  padding: 7px 12px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: rgba(255,255,255,0.9);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: border-color 0.15s;
+}
+.update-dismiss-btn:hover { border-color: rgba(255,255,255,0.8); }
+
+/* --- Settings page (Next.js uses settings-card* instead of settings-row*) --- */
+
+/* settings-card ≈ settings-row + settings-row-static (no cursor:pointer) */
+.settings-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  margin-bottom: 8px;
+}
+
+/* settings-card-row: flex row inside a card */
+.settings-card-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* settings-card-title ≈ settings-row-title */
+.settings-card-title {
+  font-weight: 600;
+  font-size: 0.95rem;
+  margin-bottom: 2px;
+}
+
+/* settings-card-desc ≈ settings-row-desc */
+.settings-card-desc {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* settings-stops-empty ≈ settings-empty */
+.settings-stops-empty {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  padding: 10px 0 8px;
+}
+.settings-stops-empty.hidden { display: none !important; }
+
+/* settings-clear-stops-btn ≈ settings-danger-btn */
+.settings-clear-stops-btn {
+  display: block;
+  width: 100%;
+  padding: 12px 16px;
+  background: none;
+  border: 1.5px solid var(--red);
+  border-radius: var(--radius);
+  color: var(--red);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  margin-top: 4px;
+  transition: background 0.15s;
+}
+.settings-clear-stops-btn:hover { background: var(--red-bg); }
+
+/* settings-view-btn ≈ settings-action-btn */
+.settings-view-btn {
+  flex-shrink: 0;
+  background: none;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+.settings-view-btn:hover {
+  border-color: var(--brand);
+  color: var(--brand);
+}
+
+/* settings-main: alias for main-content on settings page */
+.settings-main { /* inherits from main-content */ }
+
+/* settings-oss-card / settings-oss-label handled by existing rules via compound selectors */
+.settings-oss-label { /* inherits .settings-section-label */ }
+.settings-oss-card { /* inherits .settings-card */ }
+
+/* install-guide-modal ≈ install-guide-card */
+.install-guide-modal {
+  background: var(--surface);
+  border-radius: 20px 20px 0 0;
+  padding: 24px 20px 32px;
+  max-height: 80vh;
+  overflow-y: auto;
+  position: relative;
+}
+
+/* install-guide-close: top-right ✕ button */
+.install-guide-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: var(--border);
+  border: none;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  transition: background 0.15s;
+}
+.install-guide-close:hover { background: var(--brand-light); color: var(--brand); }

@@ -18,6 +18,11 @@ const withPWA = require('@ducanh2912/next-pwa').default({
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Silence the "webpack config but no turbopack config" warning.
+  // next-pwa injects webpack config internally; the app itself has no
+  // custom webpack config, so Turbopack works fine for dev.
+  turbopack: {},
+
   // Redirect old .html URLs so existing bookmarks still work
   async redirects() {
     return [

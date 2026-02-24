@@ -25,7 +25,8 @@
       "Bash(git config:*)",
       "Bash(git pull:*)",
       "Bash(find:*)",
-      "Bash(git rebase:*)"
+      "Bash(git rebase:*)",
+      "Bash(node -e:*)"
     ]
   }
 }

@@ -393,13 +393,15 @@ export default function StationPage() {
           )}
           {phase === 'error' && <p className="hint">{t.noServiceLoad}</p>}
           {phase === 'empty' && (
-            <div id="no-service">
+            <div id="no-service" className="no-service">
+              <div className="no-service-icon">🌙</div>
               <p id="no-service-text" className="no-service-text">{t.noService}</p>
               <p id="no-service-hint" className="hint">{t.checkBack}</p>
             </div>
           )}
           {phase === 'done' && services.length === 0 && (
-            <div id="no-service">
+            <div id="no-service" className="no-service">
+              <div className="no-service-icon">🌙</div>
               <p className="no-service-text">{t.noService}</p>
               <p className="hint">{t.checkBack}</p>
             </div>
