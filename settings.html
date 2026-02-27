@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Settings</title>
+  <script>(function(){var m=document.cookie.match('(?:^|; )theme=([^;]*)');var t=m?decodeURIComponent(m[1]):'system';if(t==='dark')document.documentElement.setAttribute('data-theme','dark');else if(t==='light')document.documentElement.setAttribute('data-theme','light');}());</script>
   <link rel="stylesheet" href="src/style.css?v=14" />
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#1a6fdb" />
@@ -34,6 +35,22 @@
           <div class="settings-seg" id="lang-seg">
             <button class="settings-seg-btn active" data-val="en">EN</button>
             <button class="settings-seg-btn" data-val="es">ES</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Appearance -->
+      <div class="settings-section">
+        <div class="settings-section-label" id="settings-appearance-label">Appearance</div>
+        <div class="settings-row">
+          <div class="settings-row-body">
+            <div class="settings-row-title" id="settings-theme-title">Theme</div>
+            <div class="settings-row-desc" id="settings-theme-desc">Choose display theme</div>
+          </div>
+          <div class="settings-seg" id="theme-seg">
+            <button class="settings-seg-btn" data-val="light" id="seg-light">Light</button>
+            <button class="settings-seg-btn active" data-val="system" id="seg-system">Auto</button>
+            <button class="settings-seg-btn" data-val="dark" id="seg-dark">Dark</button>
           </div>
         </div>
       </div>

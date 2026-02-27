@@ -83,6 +83,7 @@ langToggle.addEventListener('click', () => {
 });
 
 // ---- Init ----
+applyTheme();
 applyLang();
 
 // If arriving from station page with ?c=&s= params, jump straight to that stop
@@ -165,10 +166,14 @@ function initMap() {
     attributionControl: false,
   }).setView([37.0, -4.5], 9);
 
-  // Clean, muted tile style
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-    maxZoom: 19,
-  }).addTo(leafletMap);
+  // Pick tile style based on active theme
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark' ||
+    (document.documentElement.getAttribute('data-theme') !== 'light' &&
+      window.matchMedia('(prefers-color-scheme: dark)').matches);
+  const tileUrl = isDark
+    ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+    : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
+  L.tileLayer(tileUrl, { maxZoom: 19 }).addTo(leafletMap);
 
   // Zoom control bottom-right
   L.control.zoom({ position: 'bottomright' }).addTo(leafletMap);

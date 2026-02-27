@@ -67,6 +67,7 @@ langToggle.addEventListener('click', () => {
   applyLang();
 });
 
+applyTheme();
 applyLang();
 
 // ---- Init ----

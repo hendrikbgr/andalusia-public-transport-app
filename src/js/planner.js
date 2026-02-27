@@ -182,6 +182,7 @@ langToggle.addEventListener('click', () => {
 });
 
 // ---- Init ----
+applyTheme();
 applyLang();
 
 // If URL has restore params (c, fromN, toN), skip straight to results

@@ -68,6 +68,7 @@ let lastNow = null;
 let isRefreshing = false;
 
 // ---- Init ----
+applyTheme();
 applyLang();
 initPage();
 

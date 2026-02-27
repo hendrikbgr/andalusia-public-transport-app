@@ -44,6 +44,13 @@ const SETTINGS_STRINGS = {
     installAndroidStep2:  'Tap "Add to Home screen"',
     installAndroidStep3:  'Tap "Add" to confirm',
     installOtherIntro:    'On desktop, look for the install icon (⊕) in your browser\'s address bar, or open the browser menu and choose "Install app".',
+    appearanceLabel:  'Appearance',
+    themeTitle:       'Theme',
+    themeDesc:        'Choose display theme',
+    segLight:         'Light',
+    segSystem:        'Auto',
+    segDark:          'Dark',
+    toastTheme:       mode => `Theme: ${mode === 'light' ? 'Light' : mode === 'dark' ? 'Dark' : 'Auto'}`,
     ossLabel:             'Open Source',
     ossTitle:             'CTAN Bus Tracker',
     ossDesc:              'Free and open source — built for the community',
@@ -94,6 +101,13 @@ const SETTINGS_STRINGS = {
     installAndroidStep2:  'Pulsa "Añadir a pantalla de inicio"',
     installAndroidStep3:  'Pulsa "Añadir" para confirmar',
     installOtherIntro:    'En escritorio, busca el icono de instalación (⊕) en la barra de direcciones del navegador, o abre el menú del navegador y elige "Instalar app".',
+    appearanceLabel:  'Apariencia',
+    themeTitle:       'Tema',
+    themeDesc:        'Elige el tema de visualización',
+    segLight:         'Claro',
+    segSystem:        'Auto',
+    segDark:          'Oscuro',
+    toastTheme:       mode => `Tema: ${mode === 'light' ? 'Claro' : mode === 'dark' ? 'Oscuro' : 'Auto'}`,
     ossLabel:             'Código Abierto',
     ossTitle:             'CTAN Bus Tracker',
     ossDesc:              'Gratuita y de código abierto — hecha para la comunidad',
@@ -230,9 +244,18 @@ function applyLang() {
   document.getElementById('settings-github-title').textContent = ss('githubTitle');
   document.getElementById('settings-github-desc').textContent  = ss('githubDesc');
 
+  // Appearance
+  document.getElementById('settings-appearance-label').textContent = ss('appearanceLabel');
+  document.getElementById('settings-theme-title').textContent      = ss('themeTitle');
+  document.getElementById('settings-theme-desc').textContent       = ss('themeDesc');
+  document.getElementById('seg-light').textContent                 = ss('segLight');
+  document.getElementById('seg-system').textContent                = ss('segSystem');
+  document.getElementById('seg-dark').textContent                  = ss('segDark');
+
   // Sync seg buttons
   syncSeg('lang-seg', lang);
   syncSeg('datemode-seg', getCookie('plannerDateMode') || 'today');
+  syncSeg('theme-seg', getTheme());
 }
 
 // ---- Segmented control helper ----
@@ -260,6 +283,17 @@ document.getElementById('datemode-seg').addEventListener('click', e => {
   setCookie('plannerDateMode', val, 365);
   syncSeg('datemode-seg', val);
   showToast(ss('toastDateSaved', val));
+});
+
+// ---- Theme seg ----
+document.getElementById('theme-seg').addEventListener('click', e => {
+  const btn = e.target.closest('.settings-seg-btn');
+  if (!btn) return;
+  const val = btn.dataset.val;
+  setTheme(val);
+  applyTheme(val);
+  syncSeg('theme-seg', val);
+  showToast(ss('toastTheme', val));
 });
 
 // ---- Clear default region ----
@@ -380,5 +414,6 @@ document.getElementById('install-guide-overlay').addEventListener('click', e => 
 });
 
 // ---- Init ----
+applyTheme();
 applyLang();
 renderSavedStops();

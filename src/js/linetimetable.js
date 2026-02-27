@@ -95,6 +95,7 @@ langToggle.addEventListener('click', () => {
   applyLang();
 });
 
+applyTheme();
 applyLang();
 
 // ---- Default region chip ----

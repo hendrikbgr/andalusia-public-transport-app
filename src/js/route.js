@@ -59,6 +59,7 @@ let activeDirection = parseInt(SENTIDO, 10) || 1;
 let alertsData = null;
 
 // ---- Init ----
+applyTheme();
 applyLang();
 initPage();
 

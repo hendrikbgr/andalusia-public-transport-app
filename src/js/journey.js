@@ -201,6 +201,7 @@ langToggle.addEventListener('click', () => {
   if (!stepRegion.classList.contains('hidden')) loadRegions();
 });
 
+applyTheme();
 applyLang();
 
 // ---- Default region chip ----

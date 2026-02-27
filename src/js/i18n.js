@@ -124,3 +124,37 @@ function getDefaultRegion() {
 function setDefaultRegion(consortium) {
   setCookie('defaultRegion', JSON.stringify(consortium));
 }
+
+// ---- Theme helpers ----
+function getTheme() {
+  return getCookie('theme') || 'system'; // 'light' | 'dark' | 'system'
+}
+
+function setTheme(value) {
+  setCookie('theme', value, 365);
+}
+
+function applyTheme(value) {
+  const theme = value || getTheme();
+  const html = document.documentElement;
+  if (theme === 'dark') {
+    html.setAttribute('data-theme', 'dark');
+  } else if (theme === 'light') {
+    html.setAttribute('data-theme', 'light');
+  } else {
+    html.removeAttribute('data-theme'); // 'system' → let @media rule handle it
+  }
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) {
+    const isDark = theme === 'dark' ||
+      (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    meta.setAttribute('content', isDark ? '#1c1f26' : '#1a6fdb');
+  }
+}
+
+// Live-sync meta tag when OS preference changes (only matters in 'system' mode)
+if (window.matchMedia) {
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function() {
+    if (getTheme() === 'system') applyTheme('system');
+  });
+}

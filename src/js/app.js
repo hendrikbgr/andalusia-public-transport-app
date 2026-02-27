@@ -105,6 +105,7 @@ langToggle.addEventListener('click', () => {
 });
 
 // ---- Init ----
+applyTheme();
 applyLang();
 renderSavedStops();
 loadConsortiums();
